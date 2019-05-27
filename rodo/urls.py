@@ -17,6 +17,8 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.schemas import get_schema_view
 from rest_framework.documentation import include_docs_urls
+from django.conf.urls.static import static
+from django.conf import settings
 
 schema_view = get_schema_view(title = 'RODO', description = 'An API')
 
@@ -24,7 +26,7 @@ schema_view = get_schema_view(title = 'RODO', description = 'An API')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('' , include('api.urls')),
-    # path('docs/', include_docs_urls(title='RODO'))
     path('schema/', schema_view),
+    path('ckeditor/', include('ckeditor_uploader.urls')),
     path('docs/',include_docs_urls(title='RODO Api'))
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

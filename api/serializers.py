@@ -1,10 +1,6 @@
 from rest_framework import serializers
 from .models import *
 
-
-
-
-
 class MakeSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Make
@@ -21,3 +17,17 @@ class TrimSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Trim
 		fields = "__all__"
+
+class CategorySerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Category
+		fields = "__all__"
+
+class ProductSerializer(serializers.ModelSerializer):
+	category = CategorySerializer()
+	
+	class Meta:
+		model = ProductDetail
+		fields = "__all__"
+
+

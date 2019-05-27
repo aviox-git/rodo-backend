@@ -1,7 +1,8 @@
 from django.db import models
 import uuid
 from django.utils.timezone import now
-
+from ckeditor.fields import RichTextField
+from ckeditor_uploader.fields import RichTextUploadingField
 
 # Create your models here.
 
@@ -34,6 +35,7 @@ class Model(models.Model):
 
 class Trim(models.Model):
 	trim = models.CharField(max_length = 100, db_index=True)
+	description = RichTextUploadingField(null = True) 
 	model = models.ForeignKey(Model, on_delete = models.CASCADE, related_name = "modelsname")
 
 	def __str__(self):
@@ -41,6 +43,8 @@ class Trim(models.Model):
 
 class Category(models.Model):
 	name = models.CharField(max_length = 100)
+	description = RichTextUploadingField(null = True)
+	image = models.ImageField(upload_to = "category")
 
 	def __str__(self):
 		return self.name
@@ -52,19 +56,6 @@ class ProductDetail(models.Model):
 
 	def __str__(self):
 		return self.trim.trim + " | " +  str(self.price) + " | " + self.category.name
-
-class CartToken(models.Model):
-	carttoken = models.UUIDField(default=uuid.uuid4,editable=False)
-
-	def __str__(self):
-		return str(self.carttoken)
-
-class Cart(models.Model):
-	product = models.ForeignKey(ProductDetail , on_delete = models.CASCADE)
-	carttoken = models.ForeignKey(CartToken , on_delete = models.CASCADE)
-
-	def __str__(self):
-		return str(self.product.price)
 
 class Coupon(models.Model):
 	name = models.CharField(max_length = 200)

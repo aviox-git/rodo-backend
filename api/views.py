@@ -10,6 +10,24 @@ import stripe
 
 # Create your views here.
 
+class Home(views.APIView):
+
+	def get(self, request):
+		"""
+		This end point is to get all the categories on homepage
+
+		"""
+
+		dictV = {}
+		catObj = Category.objects.all()
+		catobjs = CategorySerializer(catObj, many=True)
+		dictV['categories'] = catobjs.data
+		dictV["status"] = 200
+		dictV["message"] = "success"
+		return JsonResponse(dictV)
+
+
+
 class  SearchView(views.APIView):
 	"""
 
@@ -79,119 +97,16 @@ class  SearchView(views.APIView):
 
 		dictV = {}
 		items_list = []
-		trimID = request.data.get("id")		
-		productObj = ProductDetail.objects.filter(trim_id = trimID)	
-		for obj in productObj:
-			dataObj = {
-			"id" : obj.id,
-			"price" : obj.price,
-			"category" : obj.category.name,
-			"category_id" : obj.category.id
-			}
-			items_list.append(dataObj)
-		dictV["status"] = 200
-		dictV["message"] = "success"
-		dictV['data'] = items_list
-		return JsonResponse(dictV)
-
-
-class AddCart(views.APIView):
-	"""
-
-	This view is for adding , viewing and deleting the products in the cart
-
-	"""
-
-
-	def get(self ,request):
-		"""
-
-		This end point is to view all the products in the cart.
-		You need to to send the card 'token' each time the user view the cart.
-		 
-		 """
-
-		dictV = {}
-		token = request.data.get('token')
-		cartObj = Cart.objects.filter(carttoken__carttoken = token)
-		cartvalue = 0
-		prod_items = []
-		for obj in cartObj:
-			prod_dict = {}
-			prod_dict['cartID'] =  obj.id
-			prod_dict['category'] = obj.product.category.name
-			prod_dict['price'] = obj.product.price
-			cartvalue += obj.product.price
-			prod_items.append(prod_dict)
-		dictV['status'] = 200
-		dictV["message"] = "success"
-		dictV['data'] = {"token" : token,
-		                  "cartvalue" : cartvalue ,
-						  "product" : prod_items}
-		return JsonResponse(dictV)
-
-	def post(self, request):
-
-		""" 
-
-		This endpoint is to add the products in the cart.
-		1)For the first time when you add the product in the cart you need to send the 'productId' only.then in response you will get the 'token'
-		2)Next time when ever you add the product you just need to send that 'token' along with 'productId' 
-
-		"""
-		dictV = {}
-		prod_id = request.data.get('productId')
-		token = request.data.get('token')
-		if token and prod_id:
-			tokenObj = CartToken.objects.get(carttoken = token)
-			
+		trimID = request.data.get("id")
+		productObj = ProductDetail.objects.filter(trim_id = trimID)
+		serializer = ProductSerializer(productObj , many = True)
+		if productObj:
+			dictV["status"] = 200
+			dictV["message"] = "success"
+			dictV['data'] = serializer.data
 		else:
-			cartObj =  Cart.objects.filter(product_id = prod_id)
-			if cartObj:
-				dictV["status"] = 400
-				dictV["message"] = "Oops! seems like forgot to send the token"
-				return JsonResponse(dictV)
-
-			tokenObj = CartToken.objects.create()
-
-		prodObj = ProductDetail.objects.get(id = prod_id)
-
-		#check if object in cart already exist or not
-		cartObj = Cart.objects.filter(product = prodObj , carttoken = tokenObj).exists()
-		if cartObj:
-			dictV["status"] = 400
-			dictV["message"] = "Same product in the cart already exist"
-			dictV['data'] = {'token' : tokenObj.carttoken}
-			return JsonResponse(dictV)
-
-		cartObj = Cart.objects.create(product = prodObj , carttoken = tokenObj)
-		dictV["status"] = 200
-		dictV["message"] = "success"
-		dictV['data'] = {'token' : tokenObj.carttoken}
-		return JsonResponse(dictV)
-
-	def delete(self, request):
-
-		"""
-
-		 At this end poin you need to send 'cartID'  to delete the item from the cart 
-
-		 """
-
-		dictV = {}
-		cartId =  request.data.get('cartID')
-		cartObj = Cart.objects.get(id = cartId)
-		token = cartObj.carttoken
-		cartObj.delete()
-		tokenCount = Cart.objects.filter(carttoken = token).count()
-		if tokenCount == 0:
-			tokenObj = CartToken.objects.get(carttoken = str(token))
-			dictV["status"] = 202
-			dictV["message"] = "successfully deleted"
-			return JsonResponse(dictV)
-		dictV["status"] = 202
-		dictV["message"] = "successfully deleted"
-		dictV['data'] = {'token' : str(token)}
+			dictV["status"] = 404
+			dictV["message"] = "Nothing Found"
 		return JsonResponse(dictV)
 
 class CheckOut(views.APIView):
@@ -203,26 +118,53 @@ class CheckOut(views.APIView):
 	"""
 
 	def get(self, request):
+
 		dictV = {}
-		token = request.data.get('token')
-		cartObj = Cart.objects.filter(carttoken__carttoken = token)
-		cartvalue = 0
-		prod_items = []
-		for obj in cartObj:
-			prod_dict = {}
-			prod_dict['cartID'] =  obj.id
-			prod_dict['category'] = obj.product.category.name
-			prod_dict['price'] = obj.product.price
-			cartvalue += obj.product.price
-			prod_items.append(prod_dict)
+		products = request.data.getlist("products")
+		orderId = request.data.get("orderId")
+		prod_items = [int(id) for id in products]
+		prodObj = ProductDetail.objects.filter(pk__in=products)
+		prod_name = [obj.category.name for obj in prodObj]
+		finalprice = sum([obj.price for obj in prodObj])
+		print(finalprice)
+		if orderId:
+			orderObj = OrderItem.objects.filter(order__orderId = str(orderId))
+			productOrderId = [obj.product.id for obj in orderObj]
+			delitem = list(set(productOrderId) - set(prod_items))
+			createitem = list(set(prod_items) - set(productOrderId))
+
+			#delete the order item if we have extra id in productOrderId
+			if delitem:
+				OrderItem.objects.filter(product_id__in = delitem).delete()
+				dictV['message'] = "Object is deleted "
+
+            # update order if we have extra id in products
+			elif createitem:
+				orderItemObj = []
+				prodObj = ProductDetail.objects.filter(pk__in= createitem)
+				for obj in prodObj:
+					orderItemObj.append(OrderItem(order = orderObj[0].order,product = obj))
+				orderItem = OrderItem.objects.bulk_create(orderItemObj)
+				dictV['message'] = "Object is created "
+
+			else:
+				dictV["message"] = "Nothing to update "
+
+
+		else:
+			orderobj = Order.objects.create(totalPrice = finalprice, finalPrice = finalprice,status = False)
+			orderItemObj = []
+			for obj in prodObj:
+				orderItemObj.append(OrderItem(order = orderobj,product = obj))
+			orderObj = OrderItem.objects.bulk_create(orderItemObj)
 
 		publishkey = settings.STRIPE_PUBLISHABLE_KEY
 		dictV['status'] = 200
-		dictV["message"] = "success"
-		dictV['data'] = {"cartvalue" : cartvalue ,
-		                  "token" : token,
-						  "product" : prod_items,
-						  "publishkey" : publishkey
+		dictV["message"] += " success"
+		dictV['data'] = {"finalprice" : finalprice ,
+						  "product_id" : prod_items,
+						  "product_name" : prod_name,
+						  "order_id" : orderObj[0].order.orderId
 						  }
 		return JsonResponse(dictV)
 
