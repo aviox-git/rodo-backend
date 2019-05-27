@@ -1,0 +1,116 @@
+from django.db import models
+import uuid
+from django.utils.timezone import now
+
+
+# Create your models here.
+
+class Profile(models.Model):
+	email = models.EmailField()
+	phone = models.BigIntegerField(null = True , blank = True)
+
+	def __str__(self):
+		return self.email
+
+class Year(models.Model):
+	year = models.DateField()
+
+	def __str__(self):
+		return str(self.year)
+
+class Make(models.Model):
+	make = models.CharField(max_length = 100, db_index=True,)
+	year = models.ForeignKey(Year , on_delete = models.CASCADE, related_name = "yearsname")
+
+	def __str__(self):
+		return self.make + " | " + str(self.year.year)
+
+class Model(models.Model):
+	model = models.CharField(max_length = 100, db_index=True,)
+	make = models.ForeignKey(Make, on_delete = models.CASCADE , related_name = "makename")
+
+	def __str__(self):
+		return self.model + " | " + self.make.make
+
+class Trim(models.Model):
+	trim = models.CharField(max_length = 100, db_index=True)
+	model = models.ForeignKey(Model, on_delete = models.CASCADE, related_name = "modelsname")
+
+	def __str__(self):
+		return self.trim + " | " + self.model.model
+
+class Category(models.Model):
+	name = models.CharField(max_length = 100)
+
+	def __str__(self):
+		return self.name
+
+class ProductDetail(models.Model):
+	trim  = models.ForeignKey(Trim , on_delete = models.CASCADE)
+	category = models.ForeignKey(Category , on_delete = models.CASCADE, related_name = "categories")
+	price = models.IntegerField()
+
+	def __str__(self):
+		return self.trim.trim + " | " +  str(self.price) + " | " + self.category.name
+
+class CartToken(models.Model):
+	carttoken = models.UUIDField(default=uuid.uuid4,editable=False)
+
+	def __str__(self):
+		return str(self.carttoken)
+
+class Cart(models.Model):
+	product = models.ForeignKey(ProductDetail , on_delete = models.CASCADE)
+	carttoken = models.ForeignKey(CartToken , on_delete = models.CASCADE)
+
+	def __str__(self):
+		return str(self.product.price)
+
+class Coupon(models.Model):
+	name = models.CharField(max_length = 200)
+
+	def __str__(self):
+		return self.name
+
+class Order(models.Model):
+	orderId = models.UUIDField(default=uuid.uuid4,editable=False)
+	totalPrice = models.IntegerField()
+	finalPrice = models.IntegerField()
+	status = models.BooleanField(default = False)
+	date = models.DateTimeField(default=now, editable=False)
+	coupon = models.ForeignKey(Coupon , on_delete = models.CASCADE, null = True, blank = True)
+	profile = models.ForeignKey(Profile , on_delete = models.CASCADE, null = True, blank = True)
+
+	def __str__(self):
+		return str(self.orderId) + " | " + str(self.finalPrice) 
+
+class OrderItem(models.Model):
+	order = models.ForeignKey(Order , on_delete = models.CASCADE)
+	product = models.ForeignKey(ProductDetail , on_delete = models.CASCADE)
+	transaction_id = models.CharField(max_length = 100, null =  True)
+
+	def __str__(self):
+		return str(self.order.orderId) + " | " + self.product.trim.trim
+
+class CardDetail(models.Model):
+	card_number = models.BigIntegerField()
+	expiry_date = models.DateField()
+	cvc = models.PositiveSmallIntegerField()
+	profile = models.ForeignKey(Profile , on_delete = models.CASCADE)
+
+	def __str__(self):
+		return self.profile.email + " | " + self.cvc
+
+class Address(models.Model):
+	profile = models.ForeignKey(Profile , on_delete = models.CASCADE)
+	first_name = models.CharField(max_length = 200)
+	last_name = models.CharField(max_length = 200)
+	address = models.TextField()
+	state = models.CharField(max_length = 200, null = True, blank = True)
+	city = models.CharField(max_length = 200, null = True, blank = True)
+	zipcode = models.CharField(max_length = 200, null = True, blank = True)
+
+	def __str__(self):
+		return ("{} {} {}").format(self.first_name, self.last_name, self.profile.email)
+
+
