@@ -34,8 +34,7 @@ class Model(models.Model):
 		return self.model + " | " + self.make.make
 
 class Trim(models.Model):
-	trim = models.CharField(max_length = 100, db_index=True)
-	description = RichTextUploadingField(null = True) 
+	trim = models.CharField(max_length = 100, db_index=True) 
 	model = models.ForeignKey(Model, on_delete = models.CASCADE, related_name = "modelsname")
 
 	def __str__(self):
@@ -53,6 +52,7 @@ class ProductDetail(models.Model):
 	trim  = models.ForeignKey(Trim , on_delete = models.CASCADE)
 	category = models.ForeignKey(Category , on_delete = models.CASCADE, related_name = "categories")
 	price = models.IntegerField()
+	description = RichTextUploadingField(null = True)
 
 	def __str__(self):
 		return self.trim.trim + " | " +  str(self.price) + " | " + self.category.name
