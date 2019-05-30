@@ -12,7 +12,7 @@ import stripe
 
 class Category(views.APIView):
 
-	def get(self, request):
+	def get(self, request ,  *arg, **kwargs):
 		"""
 		This end point is to get all the categories
 
@@ -28,9 +28,10 @@ class Category(views.APIView):
 
 class Product(views.APIView):
 
-	 def get(self, request):
+	 def get(self, request, *arg, **kwargs):
+
 	 	dictV = {}
-	 	productid = request.data.get("productid")
+	 	productid = request.GET.get("productid")
 	 	productobj = ProductDetail.objects.get(pk = productid)
 	 	trimid = productobj.trim
 	 	otherprod = ProductDetail.objects.filter(trim_id = trimid).exclude(pk = productid)
@@ -96,6 +97,8 @@ class  SearchView(views.APIView):
 				dictV["status_code"] = 200
 				dictV["status"] = "success"
 				dictV['data'] = items_list
+			dictV["status"] = 404
+			dictV["message"] = "No item found related to searched keyword."
 			return JsonResponse(dictV)
 
 		except:
@@ -130,14 +133,15 @@ class CheckOut(views.APIView):
 
 	"""
 
-	This endpoin is to get all the products on the checkout page. you need to send the 'token'.
+	This endpoint is to get all the products on the checkout page. you need to send the 'token'.
 
 	"""
 
-	def get(self, request):
+	def get(self, request, *arg , **kwargs):
 
 		dictV = {}
 		products = set(request.GET.getlist("products"))
+		print(products)
 		if not products:
 			dictV["status_code"] = 404
 			dictV["status"] = "false"
@@ -145,13 +149,18 @@ class CheckOut(views.APIView):
 			return JsonResponse(dictV)
 		order_id = request.data.get("order_id")
 		prod_items = [int(id) for id in products]
-		product_details = ProductDetail.objects.filter(pk__in=products)
+
+		product_details = ProductDetail.objects.filter(pk__in=prod_items)
+		products = []
 		products_list = {}
 		for product in product_details:
-			products_list["id"]=product.category.id
-			products_list["name"]=product.category.name
+			
+			products_list["id"] = product.category.id
+			products_list["name"] = product.category.name
+			products.append(products_list)
+
 		finalprice = sum([product.price for product in product_details])
-		if orderId:
+		if order_id:
 			Order.objects.filter(id=order_id).delete()
 
 		orderobj = Order.objects.create(totalPrice = finalprice, finalPrice = finalprice, status = False)
@@ -165,7 +174,7 @@ class CheckOut(views.APIView):
 		dictV['status_code'] = 200
 		dictV["status"] = " true"
 		dictV['data'] = {"totalamount" : finalprice ,
-						  "products" : products_list,
+						  "products" : products,
 						  "order_id" : orderobj.orderId
 						  }
 		return JsonResponse(dictV)
