@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '8+!jmcifrlf@6h4ihkf*wea(rb+m0khy9e*^7g#sp=2$6)wza@'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -41,9 +41,11 @@ INSTALLED_APPS = [
     'api',
     'ckeditor',
     'ckeditor_uploader',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -54,6 +56,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'rodo.urls'
+
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 TEMPLATES = [
     {
@@ -73,19 +78,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rodo.wsgi.application'
 
-
+SITE_URL = 'https://websitehostingexperts.com/api'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-if DEBUG == True:
-    DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
 
-else:
-    DATABASES = {
+DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'rodo',
@@ -132,7 +129,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = '/api/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
 MEDIA_URL = '/media/'
