@@ -52,7 +52,7 @@ class ProductDetail(models.Model):
 	trim  = models.ForeignKey(Trim , on_delete = models.CASCADE)
 	category = models.ForeignKey(Category , on_delete = models.CASCADE, related_name = "categories")
 	price = models.IntegerField()
-	description = RichTextUploadingField(null = True)
+	description = RichTextUploadingField(null = True, blank=True)
 
 	def __str__(self):
 		return self.trim.trim + " | " +  str(self.price) + " | " + self.category.name
@@ -77,11 +77,11 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
 	order = models.ForeignKey(Order , on_delete = models.CASCADE)
-	product = models.ForeignKey(ProductDetail , on_delete = models.CASCADE)
+	product = models.ForeignKey(ProductDetail , on_delete = models.CASCADE, null=True)
 	transaction_id = models.CharField(max_length = 100, null =  True)
 
 	def __str__(self):
-		return str(self.order.orderId) + " | " + self.product.trim.trim
+		return str(self.order.orderId) + " | " #+ self.product.trim.trim
 
 class CardDetail(models.Model):
 	card_number = models.BigIntegerField()

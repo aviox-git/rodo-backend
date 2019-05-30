@@ -21,7 +21,7 @@ class Home(views.APIView):
 		dictV = {}
 		catObj = Category.objects.all()
 		catobjs = CategorySerializer(catObj, many=True)
-		dictV['categories'] = catobjs.data
+		dictV['data'] = catobjs.data
 		dictV["status"] = 200
 		dictV["message"] = "success"
 		return JsonResponse(dictV)
@@ -43,7 +43,7 @@ class  SearchView(views.APIView):
 		
 		"""
 
-		search = request.data.get('search')
+		search = request.GET.get('search')
 		dictV = {}
 		try :
 
@@ -74,17 +74,15 @@ class  SearchView(views.APIView):
 			if dataObj:
 				items_list.append(dataObj)
 				dataObj = {}
-			dictV["status"] = 404
-			dictV["message"] = "Object Not Found"
 			if len(items_list) != 0 :
-				dictV["status"] = 200
-				dictV["message"] = "success"
+				dictV["status_code"] = 200
+				dictV["status"] = "success"
 				dictV['data'] = items_list
 			return JsonResponse(dictV)
 
 		except:
 			dictV["status"] = 404
-			dictV["message"] = "Object Not Found"
+			dictV["message"] = "No item found related to searched keyword."
 			return JsonResponse(dictV)
 
 	def post(self, request):
@@ -97,16 +95,17 @@ class  SearchView(views.APIView):
 
 		dictV = {}
 		items_list = []
-		trimID = request.data.get("id")
+		trimID = request.POST.get("id")
 		productObj = ProductDetail.objects.filter(trim_id = trimID)
 		serializer = ProductSerializer(productObj , many = True)
 		if productObj:
-			dictV["status"] = 200
-			dictV["message"] = "success"
+			dictV["status_code"] = 200
+			dictV["status"] = "true"
 			dictV['data'] = serializer.data
 		else:
-			dictV["status"] = 404
-			dictV["message"] = "Nothing Found"
+			dictV["status_code"] = 404
+			dictV["status"] = "false"
+			dictV["message"] = "No record associated with given id."
 		return JsonResponse(dictV)
 
 class CheckOut(views.APIView):
@@ -120,50 +119,36 @@ class CheckOut(views.APIView):
 	def get(self, request):
 
 		dictV = {}
-		products = set(request.data.getlist("products"))
-		orderId = request.data.get("orderId")
+		products = set(request.GET.getlist("products"))
+		if not products:
+			dictV["status_code"] = 404
+			dictV["status"] = "false"
+			dictV["message"] = "No product found."
+			return JsonResponse(dictV)
+		order_id = request.data.get("order_id")
 		prod_items = [int(id) for id in products]
-		prodObj = ProductDetail.objects.filter(pk__in=products)
-		prod_name = [obj.category.name for obj in prodObj]
-		finalprice = sum([obj.price for obj in prodObj])
+		product_details = ProductDetail.objects.filter(pk__in=products)
+		products_list = {}
+		for product in product_details:
+			products_list["id"]=product.category.id
+			products_list["name"]=product.category.name
+		finalprice = sum([product.price for product in product_details])
 		if orderId:
-			orderObj = OrderItem.objects.filter(order__orderId = str(orderId))
-			productOrderId = [obj.product.id for obj in orderObj]
-			delitem = list(set(productOrderId) - set(prod_items))
-			createitem = list(set(prod_items) - set(productOrderId))
+			Order.objects.filter(id=order_id).delete()
 
-			#delete the order item if we have extra id in productOrderId
-			if delitem:
-				OrderItem.objects.filter(product_id__in = delitem).delete()
-				dictV['message'] = "item is deleted "
-
-            # update order if we have extra id in products
-			elif createitem:
-				orderItemObj = []
-				prodObj = ProductDetail.objects.filter(pk__in= createitem)
-				for obj in prodObj:
-					orderItemObj.append(OrderItem(order = orderObj[0].order,product = obj))
-				orderItem = OrderItem.objects.bulk_create(orderItemObj)
-				dictV['message'] = "item is created "
-
-			else:
-				dictV["message"] = "Nothing to update "
-
-		else:
-			orderobj = Order.objects.create(totalPrice = finalprice, finalPrice = finalprice, status = False)
-			orderItemObj = []
-			for obj in prodObj:
-				orderItemObj.append(OrderItem(order = orderobj,product = obj))
-			orderObj = OrderItem.objects.bulk_create(orderItemObj)
-			dictV["message"] = ""
+		orderobj = Order.objects.create(totalPrice = finalprice, finalPrice = finalprice, status = False)
+		order_items_list = []
+		for product in product_details:
+			order_items_list.append(OrderItem(order = orderobj,product = product))
+		OrderItem.objects.bulk_create(order_items_list)
+		dictV["message"] = ""
 
 		publishkey = settings.STRIPE_PUBLISHABLE_KEY
-		dictV['status'] = 200
-		dictV["message"] += " success"
+		dictV['status_code'] = 200
+		dictV["status"] = " true"
 		dictV['data'] = {"totalamount" : finalprice ,
-						  "product_id" : prod_items,
-						  "product_name" : prod_name,
-						  "order_id" : orderObj[0].order.orderId
+						  "products" : products_list,
+						  "order_id" : orderobj.orderId
 						  }
 		return JsonResponse(dictV)
 
