@@ -10,11 +10,11 @@ import stripe
 
 # Create your views here.
 
-class Home(views.APIView):
+class Category(views.APIView):
 
 	def get(self, request):
 		"""
-		This end point is to get all the categories on homepage
+		This end point is to get all the categories
 
 		"""
 
@@ -26,6 +26,24 @@ class Home(views.APIView):
 		dictV["message"] = "success"
 		return JsonResponse(dictV)
 
+class Product(views.APIView):
+
+	 def get(self, request):
+	 	dictV = {}
+	 	productid = request.data.get("productid")
+	 	productobj = ProductDetail.objects.get(pk = productid)
+	 	trimid = productobj.trim
+	 	otherprod = ProductDetail.objects.filter(trim_id = trimid).exclude(pk = productid)
+	 	serializer = ProductSerializer(productobj)
+	 	otherserilizer = ProductSerializer(otherprod , many = True)
+	 	dictV["status"] = 200
+	 	dictV["message"] = "success"
+	 	dictV['data'] = {
+
+					"product" : serializer.data , 
+					"otherproduct"  : otherserilizer.data	
+						}
+	 	return JsonResponse(dictV)
 
 
 class  SearchView(views.APIView):
@@ -189,11 +207,11 @@ class CheckOut(views.APIView):
 		profileObj = Profile.objects.create(email = email)
 
 		#create cardobject
-		# cardObj = CardDetail.objects.create(card_number =  card_number,expiry_date = expiry_date,
-		# 	cvc = cvc, profile = profileObj)
+		cardObj = CardDetail.objects.create(card_number =  card_number,expiry_date = expiry_date,
+			cvc = cvc, profile = profileObj)
 
 		# # create address object
-		# addressObj = Address.objects.create(profile = profileObj, first_name = firstname, last_name = lastname, address = address , state = state, city = city, zipcode = zipcode)
+		addressObj = Address.objects.create(profile = profileObj, first_name = firstname, last_name = lastname, address = address , state = state, city = city, zipcode = zipcode)
 
 		#get order object
 		orderobj = Order.objects.get(orderId = orderid)
