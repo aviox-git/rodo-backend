@@ -7,6 +7,7 @@ from .serializers import *
 from django.http import JsonResponse
 from django.conf import settings
 import stripe
+import datetime
 
 # Create your views here.
 
@@ -97,8 +98,9 @@ class  SearchView(views.APIView):
 				dictV["status_code"] = 200
 				dictV["status"] = "success"
 				dictV['data'] = items_list
-			dictV["status"] = 404
-			dictV["message"] = "No item found related to searched keyword."
+			else:
+				dictV["status"] = 404
+				dictV["message"] = "No item found related to searched keyword."
 			return JsonResponse(dictV)
 
 		except:
@@ -196,6 +198,7 @@ class CheckOut(views.APIView):
 		zipcode = request.data.get("zipcode")
 		orderid = request.data.get("orderid")
 		transaction_id = request.data.get('stripeToken')
+		expiry_date = datetime.datetime.strptime(expiry_date, "%Y-%m-%d").date()
 
 		#create profile object
 		profileObj = Profile.objects.create(email = email)
