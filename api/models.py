@@ -14,7 +14,7 @@ class Profile(models.Model):
 		return self.email
 
 class Year(models.Model):
-	year = models.DateField()
+	year = models.PositiveSmallIntegerField()
 
 	def __str__(self):
 		return str(self.year)
@@ -31,14 +31,14 @@ class Model(models.Model):
 	make = models.ForeignKey(Make, on_delete = models.CASCADE , related_name = "makename")
 
 	def __str__(self):
-		return self.model + " | " + self.make.make
+		return  self.make.make + " " + self.model
 
 class Trim(models.Model):
 	trim = models.CharField(max_length = 100, db_index=True) 
 	model = models.ForeignKey(Model, on_delete = models.CASCADE, related_name = "modelsname")
 
 	def __str__(self):
-		return self.trim + " | " + self.model.model
+		return self.model.make.make + " - " + self.model.model + " - " + self.trim
 
 class Category(models.Model):
 	name = models.CharField(max_length = 100)
@@ -53,9 +53,11 @@ class ProductDetail(models.Model):
 	category = models.ForeignKey(Category , on_delete = models.CASCADE, related_name = "categories")
 	price = models.IntegerField()
 	description = RichTextUploadingField(null = True)
+	image = models.ImageField(upload_to = "products" , null = True)
+
 
 	def __str__(self):
-		return self.trim.trim + " | " +  str(self.price) + " | " + self.category.name
+		return self.trim.model.make.make + " " + self.trim.model.model + " " + self.trim.trim + " with price - " +  str(self.price) + " in Category " + self.category.name
 
 class Coupon(models.Model):
 	name = models.CharField(max_length = 200)
