@@ -11,7 +11,7 @@ import datetime
 
 # Create your views here.
 
-class Category(views.APIView):
+class Home(views.APIView):
 
 	def get(self, request ,  *arg, **kwargs):
 		"""
