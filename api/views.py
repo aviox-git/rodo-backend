@@ -149,7 +149,7 @@ class CheckOut(views.APIView):
 			dictV["status"] = "false"
 			dictV["message"] = "No product found."
 			return JsonResponse(dictV)
-		order_id = request.data.get("order_id")
+		order_id = request.GET.get("order_id")
 		prod_items = [int(id) for id in products]
 
 		product_details = ProductDetail.objects.filter(pk__in=prod_items)
@@ -163,7 +163,7 @@ class CheckOut(views.APIView):
 
 		finalprice = sum([product.price for product in product_details])
 		if order_id:
-			Order.objects.filter(id=order_id).delete()
+			Order.objects.filter(orderId=order_id).delete()
 
 		orderobj = Order.objects.create(totalPrice = finalprice, finalPrice = finalprice, status = False)
 		order_items_list = []
