@@ -42,7 +42,7 @@ class Trim(models.Model):
 
 class Category(models.Model):
 	name = models.CharField(max_length = 100)
-	description = RichTextUploadingField(null = True)
+	description = models.TextField(null = True)
 	image = models.ImageField(upload_to = "category")
 
 	def __str__(self):
