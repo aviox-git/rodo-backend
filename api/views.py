@@ -18,7 +18,6 @@ class Home(views.APIView):
 		This end point is to get all the categories
 
 		"""
-
 		dictV = {}
 		catObj = Category.objects.all()
 		catobjs = CategorySerializer(catObj, many=True)
@@ -28,6 +27,10 @@ class Home(views.APIView):
 		return JsonResponse(dictV)
 
 class Product(views.APIView):
+	"""
+	This endpoint is to get the product details
+	
+	"""
 
 	 def get(self, request, *arg, **kwargs):
 
@@ -66,7 +69,6 @@ class  SearchView(views.APIView):
 		# search = request.GET.get('search')
 		dictV = {}
 		try :
-
 			# search in trim model
 			items_list = []
 			pre_model = ""
@@ -96,17 +98,19 @@ class  SearchView(views.APIView):
 				items_list.append(dataObj)
 				dataObj = {}
 			if len(items_list) != 0 :
-				dictV["status_code"] = 200
-				dictV["status"] = "success"
+				dictV["status"] = 200
+				dictV["message"] = "success"
 				dictV['data'] = items_list
 			else:
 				dictV["status"] = 404
 				dictV["message"] = "No item found related to searched keyword."
+				dictV['data'] = trim_list
 			return JsonResponse(dictV)
 
 		except:
 			dictV["status"] = 404
 			dictV["message"] = "No item found related to searched keyword."
+			dictV['data'] = []
 			return JsonResponse(dictV)
 
 	def post(self, request):
@@ -120,15 +124,25 @@ class  SearchView(views.APIView):
 		dictV = {}
 		items_list = []
 		trimID = request.POST.get("id")
-		productObj = ProductDetail.objects.filter(trim_id = trimID)
-		serializer = ProductSerializer(productObj , many = True)
-		if productObj:
+		productobj = ProductDetail.objects.filter(trim_id = trimID)
+		items = {}
+		print(productobj)
+		for item in productobj:
+			items = {}
+			items['product_id'] = item.id
+			items['name'] = item.category.name
+			items['category-image'] = item.category.image.url
+			items['description'] = item.category.description
+			items['price'] = item.price
+			items_list.append(items)
+
+		if productobj:
 			dictV["status_code"] = 200
 			dictV["status"] = "true"
-			dictV['data'] = serializer.data
+			dictV['data'] = items_list
 		else:
-			dictV["status_code"] = 404
-			dictV["status"] = "false"
+			dictV["status"] = 404
+			dictV['data'] = []
 			dictV["message"] = "No record associated with given id."
 		return JsonResponse(dictV)
 
@@ -144,11 +158,10 @@ class CheckOut(views.APIView):
 
 		dictV = {}
 		products = set(request.GET.getlist("products"))
-		print(products)
 		if not products:
-			dictV["status_code"] = 404
-			dictV["status"] = "false"
+			dictV["status"] = 404
 			dictV["message"] = "No product found."
+			dictV['data'] = []
 			return JsonResponse(dictV)
 		order_id = request.GET.get("order_id")
 		prod_items = [int(id) for id in products]
@@ -171,11 +184,10 @@ class CheckOut(views.APIView):
 		for product in product_details:
 			order_items_list.append(OrderItem(order = orderobj,product = product))
 		OrderItem.objects.bulk_create(order_items_list)
-		dictV["message"] = ""
 
 		publishkey = settings.STRIPE_PUBLISHABLE_KEY
 		dictV['status_code'] = 200
-		dictV["status"] = " true"
+		dictV["message"] = "success"
 		dictV['data'] = {"totalamount" : finalprice ,
 						  "products" : products,
 						  "order_id" : orderobj.orderId
