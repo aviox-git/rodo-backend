@@ -37,6 +37,13 @@ class Product(views.APIView):
 
 		dictV = {}
 		productid = request.GET.get("productid")
+		if not productid:
+			dictV["status"] = False
+			dictV["message"] = "Product id is a required field"
+			dictV["status_code"] = 200
+			dictV['data'] = []
+			return JsonResponse(dictV)
+
 		productobj = ProductDetail.objects.get(pk = productid)
 		trimid = productobj.trim
 		otherprod = ProductDetail.objects.filter(trim_id = trimid).exclude(pk = productid)
@@ -105,16 +112,16 @@ class  SearchView(views.APIView):
 				dictV["message"] = "success"
 				dictV['data'] = items_list
 			else:
-				dictV["status"] = False
+				dictV["status"] = True
 				dictV["status_code"] = 404
 				dictV["message"] = "No item found related to searched keyword."
 				dictV['data'] = trim_list
 			return JsonResponse(dictV)
 
-		except:
+		except Exception as e:
 			dictV["status"] = False
-			dictV["status_code"] = 404
-			dictV["message"] = "No item found related to searched keyword."
+			dictV["status_code"] = 200
+			dictV["message"] = e
 			dictV['data'] = []
 			return JsonResponse(dictV)
 
@@ -147,8 +154,8 @@ class  SearchView(views.APIView):
 			dictV["message"] = "success"
 			dictV['data'] = items_list
 		else:
-			dictV["status_code"] = 200
-			dictV["status"] = False
+			dictV["status_code"] = 404
+			dictV["status"] = True
 			dictV['data'] = []
 			dictV["message"] = "No record associated with given id."
 		return JsonResponse(dictV)
@@ -166,8 +173,9 @@ class CheckOut(views.APIView):
 		dictV = {}
 		products = set(request.GET.getlist("products"))
 		if not products:
-			dictV["status"] = 404
-			dictV["message"] = "No product found."
+			dictV["status_code"] = 404
+			dictV["message"] = "Product List is required"
+			dictV["status"] = False
 			dictV['data'] = []
 			return JsonResponse(dictV)
 		order_id = request.GET.get("order_id")
