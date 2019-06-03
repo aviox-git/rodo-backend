@@ -136,6 +136,12 @@ class  SearchView(views.APIView):
 		dictV = {}
 		items_list = []
 		trimID = request.POST.get("id")
+		if not trimID:
+			dictV["status_code"] = 404
+			dictV["status"] = False
+			dictV['data'] = []
+			dictV["message"] = "Trim id is required"
+			return JsonResponse(dictV)
 		productobj = ProductDetail.objects.filter(trim_id = trimID)
 		items = {}
 		print(productobj)
