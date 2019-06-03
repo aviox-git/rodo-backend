@@ -63,7 +63,7 @@ class  SearchView(views.APIView):
 		
 		"""
 
-		search = request.GET.get('search')
+		# search = request.GET.get('search')
 		dictV = {}
 		try :
 
@@ -72,7 +72,8 @@ class  SearchView(views.APIView):
 			pre_model = ""
 			dataObj = {}
 			trim_list = []
-			trimObj = Trim.objects.filter(Q(trim__icontains = search)|Q(model__model__icontains = search)|Q(model__make__make__icontains = search)).order_by("model")
+			# trimObj = Trim.objects.filter(Q(trim__icontains = search)|Q(model__model__icontains = search)|Q(model__make__make__icontains = search)).order_by("model")
+			trimObj = Trim.objects.all().order_by("model")
 			for obj in trimObj:
 				trim_dict = {}
 				model = obj.model.make.make + " " + obj.model.model

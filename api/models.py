@@ -106,3 +106,9 @@ class Address(models.Model):
 		return ("{} {} {}").format(self.first_name, self.last_name, self.profile.email)
 
 
+class MetaContent(models.Model):
+	name = models.CharField(max_length = 200)
+	content = models.TextField()
+
+	def __str__(self):
+		return self.name
