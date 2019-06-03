@@ -32,23 +32,23 @@ class Product(views.APIView):
 	
 	"""
 
-	 def get(self, request, *arg, **kwargs):
+	def get(self, request, *arg, **kwargs):
 
-	 	dictV = {}
-	 	productid = request.GET.get("productid")
-	 	productobj = ProductDetail.objects.get(pk = productid)
-	 	trimid = productobj.trim
-	 	otherprod = ProductDetail.objects.filter(trim_id = trimid).exclude(pk = productid)
-	 	serializer = ProductSerializer(productobj)
-	 	otherserilizer = ProductSerializer(otherprod , many = True)
-	 	dictV["status"] = 200
-	 	dictV["message"] = "success"
-	 	dictV['data'] = {
+		dictV = {}
+		productid = request.GET.get("productid")
+		productobj = ProductDetail.objects.get(pk = productid)
+		trimid = productobj.trim
+		otherprod = ProductDetail.objects.filter(trim_id = trimid).exclude(pk = productid)
+		serializer = ProductSerializer(productobj)
+		otherserilizer = ProductSerializer(otherprod , many = True)
+		dictV["status"] = 200
+		dictV["message"] = "success"
+		dictV['data'] = {
 
-					"product" : serializer.data , 
-					"otherproduct"  : otherserilizer.data	
-						}
-	 	return JsonResponse(dictV)
+				"product" : serializer.data , 
+				"otherproduct"  : otherserilizer.data	
+					}
+		return JsonResponse(dictV)
 
 
 class  SearchView(views.APIView):
