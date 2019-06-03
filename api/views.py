@@ -22,7 +22,8 @@ class Home(views.APIView):
 		catObj = Category.objects.all()
 		catobjs = CategorySerializer(catObj, many=True)
 		dictV['data'] = catobjs.data
-		dictV["status"] = 200
+		dictV["status"] = True
+		dictV["status_code"] = 200
 		dictV["message"] = "success"
 		return JsonResponse(dictV)
 
@@ -41,8 +42,9 @@ class Product(views.APIView):
 		otherprod = ProductDetail.objects.filter(trim_id = trimid).exclude(pk = productid)
 		serializer = ProductSerializer(productobj)
 		otherserilizer = ProductSerializer(otherprod , many = True)
-		dictV["status"] = 200
+		dictV["status"] = True
 		dictV["message"] = "success"
+		dictV["status_code"] = 200
 		dictV['data'] = {
 
 				"product" : serializer.data , 
@@ -97,17 +99,20 @@ class  SearchView(views.APIView):
 				items_list.append(dataObj)
 				dataObj = {}
 			if len(items_list) != 0 :
-				dictV["status"] = 200
+				dictV["status"] = True
+				dictV["status_code"] = 200
 				dictV["message"] = "success"
 				dictV['data'] = items_list
 			else:
-				dictV["status"] = 404
+				dictV["status"] = False
+				dictV["status_code"] = 404
 				dictV["message"] = "No item found related to searched keyword."
 				dictV['data'] = trim_list
 			return JsonResponse(dictV)
 
 		except:
-			dictV["status"] = 404
+			dictV["status"] = False
+			dictV["status_code"] = 404
 			dictV["message"] = "No item found related to searched keyword."
 			dictV['data'] = []
 			return JsonResponse(dictV)
@@ -128,19 +133,21 @@ class  SearchView(views.APIView):
 		print(productobj)
 		for item in productobj:
 			items = {}
-			items['product_id'] = item.id
+			items['id'] = item.id
 			items['name'] = item.category.name
-			items['category-image'] = item.category.image.url
+			items['image'] = item.category.image.url
 			items['description'] = item.category.description
 			items['price'] = item.price
 			items_list.append(items)
 
 		if productobj:
 			dictV["status_code"] = 200
-			dictV["status"] = "true"
+			dictV["status"] = True
+			dictV["message"] = "success"
 			dictV['data'] = items_list
 		else:
-			dictV["status"] = 404
+			dictV["status_code"] = 200
+			dictV["status"] = False
 			dictV['data'] = []
 			dictV["message"] = "No record associated with given id."
 		return JsonResponse(dictV)
@@ -186,7 +193,8 @@ class CheckOut(views.APIView):
 
 		publishkey = settings.STRIPE_PUBLISHABLE_KEY
 		dictV['status_code'] = 200
-		dictV["message"] = "success"
+		dictV['status'] = True
+		dictV['message'] = "success"
 		dictV['data'] = {"totalamount" : finalprice ,
 						  "products" : products,
 						  "order_id" : orderobj.orderId
@@ -239,11 +247,13 @@ class CheckOut(views.APIView):
 			orderitem = OrderItem.objects.filter(order__orderId = orderid)
 			orderitem.update(transaction_id=transaction_id)
 			orderobj.save()
-			dictV['status'] = 200
+			dictV['status_code'] = 200
+			dictV['status'] = True
 			dictV['message'] = "your payment is successfull"
 			return JsonResponse(dictV)
 		orderobj.save()
-		dictV['status'] = 403
+		dictV['status_code'] = 403
+		dictV['status'] = False
 		dictV['message'] = "Your payment was not successfull"
 		return JsonResponse(dictV)
 
