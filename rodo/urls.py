@@ -19,6 +19,7 @@ from rest_framework.schemas import get_schema_view
 from rest_framework.documentation import include_docs_urls
 from django.conf.urls.static import static
 from django.conf import settings
+from django.http import HttpResponse
 
 schema_view = get_schema_view(title = 'RODO', description = 'An API')
 
@@ -28,5 +29,6 @@ urlpatterns = [
     path('' , include('api.urls')),
     path('schema/', schema_view),
     path('ckeditor/', include('ckeditor_uploader.urls')),
-    path('docs/',include_docs_urls(title='RODO Api'))
+    path('docs/',include_docs_urls(title='RODO Api')),
+    path('robots.txt', lambda x: HttpResponse("User-Agent: *\nDisallow: /", content_type="text/plain"), name="robots_file")
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
