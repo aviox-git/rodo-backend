@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.conf import settings
 import stripe
 import datetime
-
+from django.template.defaultfilters import truncatechars_html
 # Create your views here.
 
 class Home(views.APIView):
@@ -49,13 +49,24 @@ class Product(views.APIView):
 		otherprod = ProductDetail.objects.filter(trim_id = trimid).exclude(pk = productid)
 		serializer = ProductSerializer(productobj)
 		otherserilizer = ProductSerializer(otherprod , many = True)
+		single_prod_data = serializer.data
+		(single_prod_data).update(single_prod_data["category"])
+		del single_prod_data["category"]
+		other_pruct_list = []
+		for product in otherserilizer.data:
+			(product).update(product["category"])
+			del product["category"]
+			product["short_description"]  = truncatechars_html(product["description"], 20)
+			other_pruct_list.append(product)
+
+		single_prod_data["short_description"] = truncatechars_html(single_prod_data["description"], 20)
+
 		dictV["status"] = True
 		dictV["message"] = "success"
 		dictV["status_code"] = 200
 		dictV['data'] = {
-
-				"product" : serializer.data , 
-				"otherproduct"  : otherserilizer.data	
+				"product" : single_prod_data , 
+				# "otherproduct"  : other_pruct_list	
 					}
 		return JsonResponse(dictV)
 
@@ -88,7 +99,9 @@ class  SearchView(views.APIView):
 			for obj in trimObj:
 				trim_dict = {}
 				model = obj.model.make.make + " " + obj.model.model
+				
 				if model != pre_model:
+					
 					if trim_list:
 						dataObj["trim"]=trim_list
 						trim_list = []
@@ -96,9 +109,12 @@ class  SearchView(views.APIView):
 						items_list.append(dataObj)
 						dataObj = {}
 					dataObj["title"] = model
+
 					pre_model = model
 				trim_dict['id']=obj.id
 				trim_dict['name']=obj.trim
+				trim_dict["make"] = obj.model.make.make
+				trim_dict["model"] = obj.model.model
 				trim_list.append(trim_dict)
 			if trim_list:
 				dataObj["trim"]=trim_list
