@@ -8,6 +8,8 @@ from django.http import JsonResponse
 from django.conf import settings
 import stripe
 import datetime
+from django.views.decorators.csrf import csrf_exempt
+
 
 # Create your views here.
 
@@ -174,10 +176,70 @@ class CheckOut(views.APIView):
 
 	"""
 
-	def get(self, request, *arg , **kwargs):
+
+	def post(self, request):
 
 		dictV = {}
-		products = set(request.GET.getlist("products"))
+		stripe.api_key = settings.STRIPE_SECRET_KEY
+		amount = request.data.get("totalamount")
+		card_number = request.data.get("card_number")
+		cvc = request.data.get("cvc")
+		expiry_date = request.data.get("expiry_date")
+		email = request.data.get("email")
+		firstname = request.data.get("firstname")
+		lastname = request.data.get("lastname")
+		address = str(request.data.get("address1")) + " " + str(request.data.get("address2"))
+		state = request.data.get("state")
+		city = request.data.get("city")
+		zipcode = request.data.get("zipcode")
+		orderid = request.data.get("orderid")
+		transaction_id = request.data.get('stripeToken')
+		expiry_date = datetime.datetime.strptime(expiry_date, "%Y-%m-%d").date()
+
+		#create profile object
+		profileObj = Profile.objects.create(email = email)
+
+		#create cardobject
+		cardObj = CardDetail.objects.create(card_number =  card_number,expiry_date = expiry_date,
+			cvc = cvc, profile = profileObj)
+
+		# # create address object
+		addressObj = Address.objects.create(profile = profileObj, first_name = firstname, last_name = lastname, address = address , state = state, city = city, zipcode = zipcode)
+
+		#get order object
+		orderobj = Order.objects.get(orderId = orderid)
+		orderobj.profile = profileObj
+
+		charge = stripe.Charge.create(
+
+		amount=amount,
+		currency='usd',
+		description='RODO',
+		source=request.POST['stripeToken'],
+		metadata={'order_id': orderobj.orderId}
+		)
+		
+		if transaction_id:
+			orderobj.status = True
+			orderitem = OrderItem.objects.filter(order__orderId = orderid)
+			orderitem.update(transaction_id=transaction_id)
+			orderobj.save()
+			dictV['status_code'] = 200
+			dictV['status'] = True
+			dictV['message'] = "your payment is successfull"
+			return JsonResponse(dictV)
+		orderobj.save()
+		dictV['status_code'] = 403
+		dictV['status'] = False
+		dictV['message'] = "Your payment was not successfull"
+		return JsonResponse(dictV)
+
+@csrf_exempt
+def checkoutpage(request):
+	if request.method == "POST":
+		print(request.POST)
+		dictV = {}
+		products = set(request.POST.getlist("products"))
 		if not products:
 			dictV["status_code"] = 404
 			dictV["message"] = "Product List is required"
@@ -216,60 +278,3 @@ class CheckOut(views.APIView):
 						  }
 		return JsonResponse(dictV)
 
-	def post(self, request):
-
-		dictV = {}
-		stripe.api_key = settings.STRIPE_SECRET_KEY
-		amount = request.data.get("totalamount")
-		card_number = request.data.get("card_number")
-		cvc = request.data.get("cvc")
-		expiry_date = request.data.get("expiry_date")
-		email = request.data.get("email")
-		firstname = request.data.get("firstname")
-		lastname = request.data.get("lastname")
-		address = str(request.data.get("address1")) + " " + str(request.data.get("address2"))
-		state = request.data.get("state")
-		city = request.data.get("city")
-		zipcode = request.data.get("zipcode")
-		orderid = request.data.get("orderid")
-		transaction_id = request.data.get('stripeToken')
-		expiry_date = datetime.datetime.strptime(expiry_date, "%Y-%m-%d").date()
-
-		#create profile object
-		profileObj = Profile.objects.create(email = email)
-
-		#create cardobject
-		cardObj = CardDetail.objects.create(card_number =  card_number,expiry_date = expiry_date,
-			cvc = cvc, profile = profileObj)
-
-		# # create address object
-		addressObj = Address.objects.create(profile = profileObj, first_name = firstname, last_name = lastname, address = address , state = state, city = city, zipcode = zipcode)
-
-		#get order object
-		orderobj = Order.objects.get(orderId = orderid)
-		orderobj.profile = profileObj
-
-		# charge = stripe.Charge.create(
-
-		# amount=amount,
-		# currency='usd',
-		# description='RODO',
-		# source=request.POST['stripeToken']
-		# )
-		
-		if transaction_id:
-			orderobj.status = True
-			orderitem = OrderItem.objects.filter(order__orderId = orderid)
-			orderitem.update(transaction_id=transaction_id)
-			orderobj.save()
-			dictV['status_code'] = 200
-			dictV['status'] = True
-			dictV['message'] = "your payment is successfull"
-			return JsonResponse(dictV)
-		orderobj.save()
-		dictV['status_code'] = 403
-		dictV['status'] = False
-		dictV['message'] = "Your payment was not successfull"
-		return JsonResponse(dictV)
-
-		
