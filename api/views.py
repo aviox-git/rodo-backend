@@ -9,7 +9,8 @@ from django.conf import settings
 import stripe
 import datetime
 from django.views.decorators.csrf import csrf_exempt
-from django.template.defaultfilters import truncatechars_html
+from django.template.defaultfilters import truncatechars_html,truncatechars
+
 # Create your views here.
 
 class Home(views.APIView):
@@ -22,7 +23,11 @@ class Home(views.APIView):
 		dictV = {}
 		catObj = Category.objects.all()
 		catobjs = CategorySerializer(catObj, many=True)
-		dictV['data'] = catobjs.data
+		response_data = catobjs.data
+		for data in response_data:
+			data["description"] = truncatechars(data["description"], 142)
+			data["image"] = settings.SITE_URL+data["image"]
+		dictV['data'] = response_data
 		dictV["status"] = True
 		dictV["status_code"] = 200
 		dictV["message"] = "success"
@@ -58,16 +63,17 @@ class Product(views.APIView):
 			(product).update(product["category"])
 			del product["category"]
 			product["short_description"]  = truncatechars_html(product["description"], 20)
+			product["image"] = settings.SITE_URL+product["image"]
 			other_pruct_list.append(product)
-
+		single_prod_data["image"] = settings.SITE_URL+single_prod_data["image"]
 		single_prod_data["short_description"] = truncatechars_html(single_prod_data["description"], 20)
-
+		single_prod_data["short_more_description"] = truncatechars_html(single_prod_data["more_description"], 20)
 		dictV["status"] = True
 		dictV["message"] = "success"
 		dictV["status_code"] = 200
 		dictV['data'] = {
 				"product" : single_prod_data , 
-				# "otherproduct"  : other_pruct_list	
+				"otherproduct"  : other_pruct_list	
 					}
 		return JsonResponse(dictV)
 
@@ -293,3 +299,29 @@ def checkoutpage(request):
 						  }
 		return JsonResponse(dictV)
 
+class VehicleInfo(views.APIView):
+
+	def get(self, request ,  *arg, **kwargs):
+
+		order_id = request.GET.get("order_id")
+		order = Order.objects.get(orderId=order_id)
+		order_items_list = []
+		order_items = OrderItem.objects.filter(order=order)
+		for items in order_items:
+			order_items_dict = {
+				"items":items.product.category.name,
+				"image":settings.SITE_URL+items.product.category.image.url
+			}
+			order_items_list.append(order_items_dict)
+		response = {
+			"status_code":200,
+			"status":True,
+			"message":"success",
+			"data":{
+				"order_id":order.orderId,
+				"total_price":order.totalPrice,
+				"total_price":order.totalPrice,
+				"order_items":order_items_list
+			}
+		}
+		return JsonResponse(response)

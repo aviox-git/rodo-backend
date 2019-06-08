@@ -7,5 +7,5 @@ urlpatterns = [
     path('search' , SearchView.as_view() , name = "search"),
     path('checkout' , CheckOut.as_view() , name = "checkout"),
     path('checkoutpage' , views.checkoutpage , name = "checkoutpage"),
-    path('product' , Product.as_view() , name = "product"),
+    path('vehicle/information' , VehicleInfo.as_view() , name = "vehicle_info"),
 ]
