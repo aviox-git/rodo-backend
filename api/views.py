@@ -10,7 +10,7 @@ import stripe
 import datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.template.defaultfilters import truncatechars_html,truncatechars
-
+from datetime import datetime
 # Create your views here.
 
 class Home(views.APIView):
@@ -299,6 +299,21 @@ def checkoutpage(request):
 						  }
 		return JsonResponse(dictV)
 
+class LeaseTerms(views.APIView):
+
+	def get(self, request ,  *arg, **kwargs):
+		leaseterms = LeaseTerm.objects.all()
+		serializer = LeaseTermSerializer(leaseterms, many=True)
+		response = {
+			"status_code":200,
+			"status":True,
+			"message":"success",
+			"data":serializer.data
+		}
+		return JsonResponse(response)
+
+
+
 class VehicleInfo(views.APIView):
 
 	def get(self, request ,  *arg, **kwargs):
@@ -324,4 +339,50 @@ class VehicleInfo(views.APIView):
 				"order_items":order_items_list
 			}
 		}
+		return JsonResponse(response)
+
+	def post(self, request ,  *arg, **kwargs):
+		response = {}
+		order_id = request.POST.get("order_id")
+		leaseterm = request.POST.get("leaseterm")
+		vehilcle_id = request.POST.get("vehilcle_id")
+		date = request.POST.get("date")
+		miles_per_year = request.POST.get("miles_per_year")
+		monthly_payment = request.POST.get("monthly_payment")
+		lender = request.POST.get("lender")
+		dealer_stock_number = request.POST.get("dealer_stock_number")
+		response['status_code'] = 404
+		response['status'] = False
+		if not order_id:
+			response['message'] = "Order id connot be blank."
+		elif not leaseterm:
+			response['message'] = "Lease Term connot be blank."
+		elif not vehilcle_id:
+			response['message'] = "Vehical idetification number id connot be blank."
+		elif not date:
+			response['message'] = "Date connot be blank."
+		elif not miles_per_year:
+			response['message'] = "Miles per year connot be blank."
+		elif not monthly_payment:
+			response['message'] = "Monthly payment connot be blank."
+		elif not lender:
+			response['message'] = "Lender connot be blank."
+		elif not dealer_stock_number:
+			response['message'] = "Dealer stock number connot be blank."
+		else:
+			date_obj = datetime.strptime(date, "%d/%m/%Y")
+			order = Order.objects.get(orderId=order_id)
+			VehicleInformation.objects.create(
+				order=order,
+				leaseterm_id=leaseterm,
+				vehilcle_id=vehilcle_id,
+				date=date_obj.date(),
+				miles_per_year=miles_per_year,
+				monthly_payment=monthly_payment,
+				lender=lender,
+				dealer_stock_number=dealer_stock_number
+			)
+			response['status_code'] = 200
+			response['status'] = True
+			response['message'] = "success"
 		return JsonResponse(response)

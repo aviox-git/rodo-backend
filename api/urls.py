@@ -9,4 +9,5 @@ urlpatterns = [
     path('checkoutpage' , views.checkoutpage , name = "checkoutpage"),
     path('product' , Product.as_view() , name = "product"),
     path('vehicle/information' , VehicleInfo.as_view() , name = "vehicle_info"),
+    path('leaseterm' , LeaseTerms.as_view() , name = "leaseterm"),
 ]

@@ -35,3 +35,7 @@ class ProductSerializer(serializers.ModelSerializer):
 		fields = "__all__"
 
 
+class LeaseTermSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = LeaseTerm
+		fields =["id","name",]

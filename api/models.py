@@ -113,3 +113,24 @@ class MetaContent(models.Model):
 
 	def __str__(self):
 		return self.name
+
+
+class LeaseTerm(models.Model):
+	name = models.CharField(max_length = 200)
+	content = models.TextField()
+
+	def __str__(self):
+		return self.name
+
+class VehicleInformation(models.Model):
+	order = models.ForeignKey(Order , on_delete = models.CASCADE)
+	leaseterm = models.ForeignKey(LeaseTerm , on_delete = models.DO_NOTHING)
+	vehilcle_id = models.CharField(max_length = 200)
+	date = models.DateField()
+	miles_per_year = models.CharField(max_length = 200)
+	monthly_payment = models.FloatField(default=0.0)
+	lender = models.CharField(max_length = 200)
+	dealer_stock_number = models.CharField(max_length = 200)
+
+	def __str__(self):
+		return self.vehilcle_id
