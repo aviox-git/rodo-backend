@@ -396,8 +396,16 @@ class VehicleInfo(views.APIView):
 class Orders(views.APIView):
 
 	def post(self, request):
+		print(request.POST)
 		context = {}
 		orderid = str(request.POST.get('orderid'))
+		print(type(orderid))
+		if orderid == 'None':
+			context['status_code'] = 404
+			context['status'] = False
+			context['message'] = "Order ID required"
+			context['data'] = []
+			return JsonResponse(context)
 		orders = OrderItem.objects.filter(order__orderId = orderid)
 		context['data'] = {}
 		order_list = []
@@ -411,5 +419,9 @@ class Orders(views.APIView):
 		print(totalamount)
 		context['data']['products'] = order_list
 		context['data']['totalamount'] = totalamount
+		context['status_code'] = 200
+		context['status'] = True
+		context['message'] = "success"
+
 		# context['data'] = order_list
 		return JsonResponse(context)
