@@ -267,9 +267,9 @@ class CheckOut(views.APIView):
 @csrf_exempt
 def checkoutpage(request):
 	if request.method == "POST":
-		print(request.POST)
 		dictV = {}
-		products = set(request.POST.getlist("products"))
+		prod =  request.POST.get("products")
+		products = [x.strip() for x in prod.split(',')]
 		if not products:
 			dictV["status_code"] = 404
 			dictV["message"] = "Product List is required"
@@ -278,16 +278,13 @@ def checkoutpage(request):
 			return JsonResponse(dictV)
 		order_id = request.GET.get("order_id")
 		prod_items = [int(id) for id in products]
-
 		product_details = ProductDetail.objects.filter(pk__in=prod_items)
 		products = []
-		products_list = {}
 		for product in product_details:
-			
+			products_list = {}
 			products_list["id"] = product.category.id
 			products_list["name"] = product.category.name
 			products.append(products_list)
-
 		finalprice = sum([product.price for product in product_details])
 		if order_id:
 			Order.objects.filter(orderId=order_id).delete()
@@ -395,3 +392,24 @@ class VehicleInfo(views.APIView):
 			response['status'] = True
 			response['message'] = "success"
 		return JsonResponse(response)
+
+class Orders(views.APIView):
+
+	def post(self, request):
+		context = {}
+		orderid = str(request.POST.get('orderid'))
+		orders = OrderItem.objects.filter(order__orderId = orderid)
+		context['data'] = {}
+		order_list = []
+		totalamount = 0
+		for order in orders:
+			orderdict = {}
+			orderdict['name'] = order.product.category.__str__()
+			orderdict['image'] = order.product.image.url
+			totalamount += order.product.price
+			order_list.append(orderdict)
+		print(totalamount)
+		context['data']['products'] = order_list
+		context['data']['totalamount'] = totalamount
+		# context['data'] = order_list
+		return JsonResponse(context)
