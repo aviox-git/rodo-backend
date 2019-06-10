@@ -413,15 +413,12 @@ class Orders(views.APIView):
 		for order in orders:
 			orderdict = {}
 			orderdict['name'] = order.product.category.__str__()
-			orderdict['image'] = order.product.image.url
+			orderdict['image'] = settings.SITE_URL + order.product.image.url
 			totalamount += order.product.price
 			order_list.append(orderdict)
-		print(totalamount)
 		context['data']['products'] = order_list
 		context['data']['totalamount'] = totalamount
 		context['status_code'] = 200
 		context['status'] = True
 		context['message'] = "success"
-
-		# context['data'] = order_list
 		return JsonResponse(context)
