@@ -7,7 +7,10 @@ from .serializers import *
 from django.http import JsonResponse
 from django.conf import settings
 import stripe
-import datetime 
+import datetime
+from django.views.decorators.csrf import csrf_exempt
+from django.template.defaultfilters import truncatechars_html,truncatechars
+from datetime import datetime
 
 # Create your views here.
 
@@ -24,7 +27,11 @@ class Home(views.APIView):
 		metaitems = MetaContent.objects.all()
 		catobjs = CategorySerializer(catObj, many=True)
 		metaserailizer = MetaContentSerailizers(metaitems, many = True)
-		dictV['data'] = catobjs.data
+		response_data = catobjs.data
+		for data in response_data:
+			data["description"] = truncatechars(data["description"], 142)
+			data["image"] = settings.SITE_URL+data["image"]
+		dictV['data'] = response_data
 		dictV["status"] = True
 		dictV["status_code"] = 200
 		dictV["message"] = "success"
@@ -58,13 +65,25 @@ class Product(views.APIView):
 		otherprod = ProductDetail.objects.filter(trim_id = trimid).exclude(pk = productid)
 		serializer = ProductSerializer(productobj)
 		otherserilizer = ProductSerializer(otherprod , many = True)
+		single_prod_data = serializer.data
+		(single_prod_data).update(single_prod_data["category"])
+		del single_prod_data["category"]
+		other_pruct_list = []
+		for product in otherserilizer.data:
+			(product).update(product["category"])
+			del product["category"]
+			product["short_description"]  = truncatechars_html(product["description"], 20)
+			product["image"] = settings.SITE_URL+product["image"]
+			other_pruct_list.append(product)
+		single_prod_data["image"] = settings.SITE_URL+single_prod_data["image"]
+		single_prod_data["short_description"] = truncatechars_html(single_prod_data["description"], 20)
+		single_prod_data["short_more_description"] = truncatechars_html(single_prod_data["more_description"], 20)
 		dictV["status"] = True
 		dictV["message"] = "success"
 		dictV["status_code"] = 200
 		dictV['data'] = {
-
-				"product" : serializer.data , 
-				"otherproduct"  : otherserilizer.data	
+				"product" : single_prod_data , 
+				"otherproduct"  : other_pruct_list	
 					}
 		return JsonResponse(dictV)
 
@@ -97,7 +116,9 @@ class  SearchView(views.APIView):
 			for obj in trimObj:
 				trim_dict = {}
 				model = obj.model.make.make + " " + obj.model.model
+				
 				if model != pre_model:
+					
 					if trim_list:
 						dataObj["trim"]=trim_list
 						trim_list = []
@@ -105,9 +126,12 @@ class  SearchView(views.APIView):
 						items_list.append(dataObj)
 						dataObj = {}
 					dataObj["title"] = model
+
 					pre_model = model
 				trim_dict['id']=obj.id
 				trim_dict['name']=obj.trim
+				trim_dict["make"] = obj.model.make.make
+				trim_dict["model"] = obj.model.model
 				trim_list.append(trim_dict)
 			if trim_list:
 				dataObj["trim"]=trim_list
@@ -182,10 +206,70 @@ class CheckOut(views.APIView):
 
 	"""
 
-	def get(self, request, *arg , **kwargs):
+
+	def post(self, request):
 
 		dictV = {}
-		products = set(request.GET.getlist("products"))
+		stripe.api_key = settings.STRIPE_SECRET_KEY
+		amount = request.data.get("totalamount")
+		card_number = request.data.get("card_number")
+		cvc = request.data.get("cvc")
+		expiry_date = request.data.get("expiry_date")
+		email = request.data.get("email")
+		firstname = request.data.get("firstname")
+		lastname = request.data.get("lastname")
+		address = str(request.data.get("address1")) + " " + str(request.data.get("address2"))
+		state = request.data.get("state")
+		city = request.data.get("city")
+		zipcode = request.data.get("zipcode")
+		orderid = request.data.get("orderid")
+		transaction_id = request.data.get('stripeToken')
+		expiry_date = datetime.datetime.strptime(expiry_date, "%Y-%m-%d").date()
+
+		#create profile object
+		profileObj = Profile.objects.create(email = email)
+
+		#create cardobject
+		cardObj = CardDetail.objects.create(card_number =  card_number,expiry_date = expiry_date,
+			cvc = cvc, profile = profileObj)
+
+		# # create address object
+		addressObj = Address.objects.create(profile = profileObj, first_name = firstname, last_name = lastname, address = address , state = state, city = city, zipcode = zipcode)
+
+		#get order object
+		orderobj = Order.objects.get(orderId = orderid)
+		orderobj.profile = profileObj
+
+		charge = stripe.Charge.create(
+
+		amount=amount,
+		currency='usd',
+		description='RODO',
+		source=request.POST['stripeToken'],
+		metadata={'order_id': orderobj.orderId}
+		)
+		
+		if transaction_id:
+			orderobj.status = True
+			orderitem = OrderItem.objects.filter(order__orderId = orderid)
+			orderitem.update(transaction_id=transaction_id)
+			orderobj.save()
+			dictV['status_code'] = 200
+			dictV['status'] = True
+			dictV['message'] = "your payment is successfull"
+			return JsonResponse(dictV)
+		orderobj.save()
+		dictV['status_code'] = 403
+		dictV['status'] = False
+		dictV['message'] = "Your payment was not successfull"
+		return JsonResponse(dictV)
+
+@csrf_exempt
+def checkoutpage(request):
+	if request.method == "POST":
+		print(request.POST)
+		dictV = {}
+		products = set(request.POST.getlist("products"))
 		if not products:
 			dictV["status_code"] = 404
 			dictV["message"] = "Product List is required"
@@ -224,60 +308,90 @@ class CheckOut(views.APIView):
 						  }
 		return JsonResponse(dictV)
 
-	def post(self, request):
+class LeaseTerms(views.APIView):
 
-		dictV = {}
-		stripe.api_key = settings.STRIPE_SECRET_KEY
-		amount = request.data.get("totalamount")
-		card_number = request.data.get("card_number")
-		cvc = request.data.get("cvc")
-		expiry_date = request.data.get("expiry_date")
-		email = request.data.get("email")
-		firstname = request.data.get("firstname")
-		lastname = request.data.get("lastname")
-		address = str(request.data.get("address1")) + " " + str(request.data.get("address2"))
-		state = request.data.get("state")
-		city = request.data.get("city")
-		zipcode = request.data.get("zipcode")
-		orderid = request.data.get("orderid")
-		transaction_id = request.data.get('stripeToken')
-		expiry_date = datetime.datetime.strptime(expiry_date, "%Y-%m-%d").date()
+	def get(self, request ,  *arg, **kwargs):
+		leaseterms = LeaseTerm.objects.all()
+		serializer = LeaseTermSerializer(leaseterms, many=True)
+		response = {
+			"status_code":200,
+			"status":True,
+			"message":"success",
+			"data":serializer.data
+		}
+		return JsonResponse(response)
 
-		#create profile object
-		profileObj = Profile.objects.create(email = email)
 
-		#create cardobject
-		cardObj = CardDetail.objects.create(card_number =  card_number,expiry_date = expiry_date,
-			cvc = cvc, profile = profileObj)
 
-		# # create address object
-		addressObj = Address.objects.create(profile = profileObj, first_name = firstname, last_name = lastname, address = address , state = state, city = city, zipcode = zipcode)
+class VehicleInfo(views.APIView):
 
-		#get order object
-		orderobj = Order.objects.get(orderId = orderid)
-		orderobj.profile = profileObj
+	def get(self, request ,  *arg, **kwargs):
 
-		# charge = stripe.Charge.create(
+		order_id = request.GET.get("order_id")
+		order = Order.objects.get(orderId=order_id)
+		order_items_list = []
+		order_items = OrderItem.objects.filter(order=order)
+		for items in order_items:
+			order_items_dict = {
+				"items":items.product.category.name,
+				"image":settings.SITE_URL+items.product.category.image.url
+			}
+			order_items_list.append(order_items_dict)
+		response = {
+			"status_code":200,
+			"status":True,
+			"message":"success",
+			"data":{
+				"order_id":order.orderId,
+				"total_price":order.totalPrice,
+				"total_price":order.totalPrice,
+				"order_items":order_items_list
+			}
+		}
+		return JsonResponse(response)
 
-		# amount=amount,
-		# currency='usd',
-		# description='RODO',
-		# source=request.POST['stripeToken']
-		# )
-		
-		if transaction_id:
-			orderobj.status = True
-			orderitem = OrderItem.objects.filter(order__orderId = orderid)
-			orderitem.update(transaction_id=transaction_id)
-			orderobj.save()
-			dictV['status_code'] = 200
-			dictV['status'] = True
-			dictV['message'] = "your payment is successfull"
-			return JsonResponse(dictV)
-		orderobj.save()
-		dictV['status_code'] = 403
-		dictV['status'] = False
-		dictV['message'] = "Your payment was not successfull"
-		return JsonResponse(dictV)
-
-		
+	def post(self, request ,  *arg, **kwargs):
+		response = {}
+		order_id = request.POST.get("order_id")
+		leaseterm = request.POST.get("leaseterm")
+		vehilcle_id = request.POST.get("vehilcle_id")
+		date = request.POST.get("date")
+		miles_per_year = request.POST.get("miles_per_year")
+		monthly_payment = request.POST.get("monthly_payment")
+		lender = request.POST.get("lender")
+		dealer_stock_number = request.POST.get("dealer_stock_number")
+		response['status_code'] = 404
+		response['status'] = False
+		if not order_id:
+			response['message'] = "Order id connot be blank."
+		elif not leaseterm:
+			response['message'] = "Lease Term connot be blank."
+		elif not vehilcle_id:
+			response['message'] = "Vehical idetification number id connot be blank."
+		elif not date:
+			response['message'] = "Date connot be blank."
+		elif not miles_per_year:
+			response['message'] = "Miles per year connot be blank."
+		elif not monthly_payment:
+			response['message'] = "Monthly payment connot be blank."
+		elif not lender:
+			response['message'] = "Lender connot be blank."
+		elif not dealer_stock_number:
+			response['message'] = "Dealer stock number connot be blank."
+		else:
+			date_obj = datetime.strptime(date, "%d/%m/%Y")
+			order = Order.objects.get(orderId=order_id)
+			VehicleInformation.objects.create(
+				order=order,
+				leaseterm_id=leaseterm,
+				vehilcle_id=vehilcle_id,
+				date=date_obj.date(),
+				miles_per_year=miles_per_year,
+				monthly_payment=monthly_payment,
+				lender=lender,
+				dealer_stock_number=dealer_stock_number
+			)
+			response['status_code'] = 200
+			response['status'] = True
+			response['message'] = "success"
+		return JsonResponse(response)

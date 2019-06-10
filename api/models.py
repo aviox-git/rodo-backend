@@ -57,6 +57,7 @@ class ProductDetail(models.Model):
 	category = models.ForeignKey(Category , on_delete = models.CASCADE, related_name = "categories")
 	price = models.IntegerField()
 	description = RichTextUploadingField(null = True)
+	more_description = RichTextUploadingField(null = True)
 	image = models.ImageField(upload_to = "products" , null = True)
 
 	def __str__(self):
@@ -144,3 +145,25 @@ class MetaContent(models.Model):
 
 		self.h1= self.h1.capitalize()
 		super(MetaContent , self).save(*arg ,**kwargs)
+		return self.name
+
+
+class LeaseTerm(models.Model):
+	name = models.CharField(max_length = 200)
+	content = models.TextField()
+
+	def __str__(self):
+		return self.name
+
+class VehicleInformation(models.Model):
+	order = models.ForeignKey(Order , on_delete = models.CASCADE)
+	leaseterm = models.ForeignKey(LeaseTerm , on_delete = models.DO_NOTHING)
+	vehilcle_id = models.CharField(max_length = 200)
+	date = models.DateField()
+	miles_per_year = models.CharField(max_length = 200)
+	monthly_payment = models.FloatField(default=0.0)
+	lender = models.CharField(max_length = 200)
+	dealer_stock_number = models.CharField(max_length = 200)
+
+	def __str__(self):
+		return self.vehilcle_id

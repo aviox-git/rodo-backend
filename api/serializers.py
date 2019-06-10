@@ -19,8 +19,13 @@ class TrimSerializer(serializers.ModelSerializer):
 		fields = "__all__"
 
 
+class CategoryNameSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Category
+		fields =["name",]
+
 class ProductSerializer(serializers.ModelSerializer):
-	
+	category = CategoryNameSerializer()
 	class Meta:
 		model = ProductDetail
 		fields = "__all__"
@@ -39,7 +44,7 @@ class CategorySerializer(serializers.ModelSerializer):
 		fields = ("id" , "name" ,"description" ,"image" , "meta")
 
 
-
-
-
-
+class LeaseTermSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = LeaseTerm
+		fields =["id","name",]
