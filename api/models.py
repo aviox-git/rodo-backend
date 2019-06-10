@@ -3,6 +3,9 @@ import uuid
 from django.utils.timezone import now
 from ckeditor.fields import RichTextField
 from ckeditor_uploader.fields import RichTextUploadingField
+from django.utils.text import slugify
+from django.core.exceptions import ValidationError
+
 
 # Create your models here.
 
@@ -47,6 +50,7 @@ class Category(models.Model):
 
 	def __str__(self):
 		return self.name
+
 
 class ProductDetail(models.Model):
 	trim  = models.ForeignKey(Trim , on_delete = models.CASCADE)
@@ -107,8 +111,36 @@ class Address(models.Model):
 
 
 class MetaContent(models.Model):
-	name = models.CharField(max_length = 200)
-	content = models.TextField()
+	page_choices = (("home", "Home"), ("checkout" , "checkout"), ("cat","category"))
+	page = models.CharField(choices = page_choices, max_length = 30)
+	category = models.ForeignKey(Category, on_delete = models.CASCADE ,  null = True,  blank = True , related_name='meta')
+	title = models.CharField(max_length = 500)
+	h1 = models.CharField(max_length = 1000)
+	meta_descripton = models.TextField()
+	slug = models.SlugField(unique = True,blank = True)
 
 	def __str__(self):
-		return self.name
+		return self.title
+
+	def clean(self):
+		if self.page == "cat" and self.category == None:
+			raise ValidationError("Category is a required field now")
+		elif(self.page == "home" or self.page == "checkout") and self.category != None:
+			raise ValidationError("Category should be empty now")
+
+
+	def save(self, *arg , **kwargs):
+		if self.page == "home" or self.page == "checkout" and self.category == None:
+			if self.page == "home":
+				print("fgdfg")
+				self.slug = "www.rodoinsurance.com"
+			else:
+				self.slug = "www.rodoinsurance.com/" + slugify(self.page)
+
+		elif self.page == "cat" and self.category == None:
+			raise ValidationError("Category is required field now")
+		else:
+			self.slug = "www.rodoinsurance.com/" + slugify(self.category.name)
+
+		self.h1= self.h1.capitalize()
+		super(MetaContent , self).save(*arg ,**kwargs)

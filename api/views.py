@@ -7,7 +7,7 @@ from .serializers import *
 from django.http import JsonResponse
 from django.conf import settings
 import stripe
-import datetime
+import datetime 
 
 # Create your views here.
 
@@ -18,13 +18,18 @@ class Home(views.APIView):
 		This end point is to get all the categories
 
 		"""
+
 		dictV = {}
 		catObj = Category.objects.all()
+		metaitems = MetaContent.objects.all()
 		catobjs = CategorySerializer(catObj, many=True)
+		metaserailizer = MetaContentSerailizers(metaitems, many = True)
 		dictV['data'] = catobjs.data
 		dictV["status"] = True
 		dictV["status_code"] = 200
 		dictV["message"] = "success"
+		dictV["meta"] = metaserailizer.data
+
 		return JsonResponse(dictV)
 
 class Product(views.APIView):
@@ -45,6 +50,10 @@ class Product(views.APIView):
 			return JsonResponse(dictV)
 
 		productobj = ProductDetail.objects.get(pk = productid)
+		category = productobj.category.id
+		metaitems = MetaContent.objects.filter(category__id = category)
+		metaserailizer = MetaContentSerailizers(metaitems, many = True)
+		items['meta'] = metaserailizer.data
 		trimid = productobj.trim
 		otherprod = ProductDetail.objects.filter(trim_id = trimid).exclude(pk = productid)
 		serializer = ProductSerializer(productobj)
@@ -144,7 +153,6 @@ class  SearchView(views.APIView):
 			return JsonResponse(dictV)
 		productobj = ProductDetail.objects.filter(trim_id = trimID)
 		items = {}
-		print(productobj)
 		for item in productobj:
 			items = {}
 			items['id'] = item.id

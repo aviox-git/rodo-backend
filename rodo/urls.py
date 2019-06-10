@@ -23,7 +23,7 @@ from django.http import HttpResponse
 
 schema_view = get_schema_view(title = 'RODO', description = 'An API')
 
-
+ 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('' , include('api.urls')),
