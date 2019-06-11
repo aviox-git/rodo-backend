@@ -391,4 +391,4 @@ class VehicleInfo(views.APIView):
 			response['message'] = "success"
 		return JsonResponse(response)
 
-		
+
