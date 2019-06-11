@@ -60,7 +60,7 @@ class Product(views.APIView):
 		category = productobj.category.id
 		metaitems = MetaContent.objects.filter(category__id = category)
 		metaserailizer = MetaContentSerailizers(metaitems, many = True)
-		items['meta'] = metaserailizer.data
+		# items['meta'] = metaserailizer.data
 		trimid = productobj.trim
 		otherprod = ProductDetail.objects.filter(trim_id = trimid).exclude(pk = productid)
 		serializer = ProductSerializer(productobj)
@@ -224,7 +224,7 @@ class CheckOut(views.APIView):
 		zipcode = request.data.get("zipcode")
 		orderid = request.data.get("orderid")
 		transaction_id = request.data.get('stripeToken')
-		expiry_date = datetime.datetime.strptime(expiry_date, "%Y-%m-%d").date()
+		expiry_date = datetime.strptime(expiry_date, "%Y-%m-%d").date()
 
 		#create profile object
 		profileObj = Profile.objects.create(email = email)
@@ -241,7 +241,6 @@ class CheckOut(views.APIView):
 		orderobj.profile = profileObj
 
 		charge = stripe.Charge.create(
-
 		amount=amount,
 		currency='usd',
 		description='RODO',
