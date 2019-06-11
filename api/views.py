@@ -373,7 +373,8 @@ class VehicleInfo(views.APIView):
 			response['message'] = "Please upload the related documents."
 		else:
 			try:
-				date_obj = datetime.strptime(date, "%d/%m/%Y")
+				date_obj = datetime.strptime(date, '%Y-%m-%d')
+				print(date_obj)
 				order = Order.objects.get(orderId=order_id)
 				VehicleInformation.objects.create(
 					order=order,
