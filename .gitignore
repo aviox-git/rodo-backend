@@ -3,3 +3,4 @@
 media/
 api/migrations/*
 db.sqlite3
+dashboard/migrations/*
