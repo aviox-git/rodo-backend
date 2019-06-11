@@ -312,33 +312,33 @@ class LeaseTerms(views.APIView):
 
 class VehicleInfo(views.APIView):
 
-	def get(self, request ,  *arg, **kwargs):
+	# def get(self, request ,  *arg, **kwargs):
 
-		context = {}
-		orderid = str(request.GET.get('orderid'))
-		if orderid == 'None':
-			context['status_code'] = 404
-			context['status'] = False
-			context['message'] = "Order ID required"
-			context['data'] = []
-			return JsonResponse(context)
-		orders = OrderItem.objects.filter(order__orderId = orderid)
-		print(orders)
-		context['data'] = {}
-		order_list = []
-		totalamount = 0
-		for order in orders:
-			orderdict = {}
-			orderdict['name'] = order.product.category.__str__()
-			orderdict['image'] = settings.SITE_URL + order.product.image.url
-			totalamount += order.product.price
-			order_list.append(orderdict)
-		context['data']['products'] = order_list
-		context['data']['totalamount'] = totalamount
-		context['status_code'] = 200
-		context['status'] = True
-		context['message'] = "success"
-		return JsonResponse(context)
+	# 	context = {}
+	# 	orderid = str(request.GET.get('orderid'))
+	# 	if orderid == 'None':
+	# 		context['status_code'] = 404
+	# 		context['status'] = False
+	# 		context['message'] = "Order ID required"
+	# 		context['data'] = []
+	# 		return JsonResponse(context)
+	# 	orders = OrderItem.objects.filter(order__orderId = orderid)
+	# 	print(orders)
+	# 	context['data'] = {}
+	# 	order_list = []
+	# 	totalamount = 0
+	# 	for order in orders:
+	# 		orderdict = {}
+	# 		orderdict['name'] = order.product.category.__str__()
+	# 		orderdict['image'] = settings.SITE_URL + order.product.image.url
+	# 		totalamount += order.product.price
+	# 		order_list.append(orderdict)
+	# 	context['data']['products'] = order_list
+	# 	context['data']['totalamount'] = totalamount
+	# 	context['status_code'] = 200
+	# 	context['status'] = True
+	# 	context['message'] = "success"
+	# 	return JsonResponse(context)
 
 	def post(self, request ,  *arg, **kwargs):
 		response = {}
@@ -372,23 +372,59 @@ class VehicleInfo(views.APIView):
 		elif not file:
 			response['message'] = "Please upload the related documents."
 		else:
-			date_obj = datetime.strptime(date, "%d/%m/%Y")
-			order = Order.objects.get(orderId=order_id)
-			VehicleInformation.objects.create(
-				order=order,
-				leaseterm_id=leaseterm,
-				vehilcle_id=vehilcle_id,
-				date=date_obj.date(),
-				miles_per_year=miles_per_year,
-				monthly_payment=monthly_payment,
-				lender=lender,
-				dealer_stock_number=dealer_stock_number,
-				file = file
+			try:
+				date_obj = datetime.strptime(date, "%d/%m/%Y")
+				order = Order.objects.get(orderId=order_id)
+				VehicleInformation.objects.create(
+					order=order,
+					leaseterm_id=leaseterm,
+					vehilcle_id=vehilcle_id,
+					date=date_obj.date(),
+					miles_per_year=miles_per_year,
+					monthly_payment=monthly_payment,
+					lender=lender,
+					dealer_stock_number=dealer_stock_number,
+					file = file
+				)
+				response['status_code'] = 200
+				response['status'] = True
+				response['message'] = "success"
+			except Exception as e:
+				response['status_code'] = 400
+				response['status'] = False
+				response['message'] = "Exception raised : " + str(e)
 
-			)
-			response['status_code'] = 200
-			response['status'] = True
-			response['message'] = "success"
+			
 		return JsonResponse(response)
 
+class Orders(views.APIView):
 
+	def post(self, request):
+		context = {}
+		orderid = str(request.POST.get('orderid'))
+		if orderid == 'None':
+			context['status_code'] = 404
+			context['status'] = False
+			context['message'] = "Order ID required"
+			context['data'] = []
+			return JsonResponse(context)
+		orders = OrderItem.objects.filter(order__orderId = orderid)
+		context['data'] = {}
+		order_list = []
+		totalamount = 0
+		for order in orders:
+			orderdict = {}
+			orderdict['name'] = order.product.category.__str__()
+			orderdict['image'] = settings.SITE_URL + order.product.image.url
+			totalamount += order.product.price
+			order_list.append(orderdict)
+
+		leaseterm = LeaseTerm.objects.all()
+		leasetermserailizer = LeaseTermSerializer(leaseterm , many = True)
+		context['data']['products'] = order_list
+		context['data']['totalamount'] = totalamount
+		context['data']['leaseterm'] = leasetermserailizer.data
+		context['status_code'] = 200
+		context['status'] = True
+		context['message'] = "success"
+		return JsonResponse(context)
