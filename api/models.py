@@ -164,7 +164,7 @@ class VehicleInformation(models.Model):
 	monthly_payment = models.FloatField(default=0.0)
 	lender = models.CharField(max_length = 200)
 	dealer_stock_number = models.CharField(max_length = 200)
-	file = models.FileField(upload_to = "Vechile-Documents")
+	file = models.FileField(upload_to = "Vechile-Documents", null = True)
 
 	def __str__(self):
 		return self.vehilcle_id
