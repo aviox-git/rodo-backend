@@ -89,14 +89,14 @@ class OrderItem(models.Model):
 	def __str__(self):
 		return str(self.order.orderId) + " | " #+ self.product.trim.trim
 
-class CardDetail(models.Model):
-	card_number = models.BigIntegerField()
-	expiry_date = models.DateField()
-	cvc = models.PositiveSmallIntegerField()
-	profile = models.ForeignKey(Profile , on_delete = models.CASCADE)
+# class CardDetail(models.Model):
+# 	card_number = models.BigIntegerField()
+# 	expiry_date = models.DateField()
+# 	cvc = models.PositiveSmallIntegerField()
+# 	profile = models.ForeignKey(Profile , on_delete = models.CASCADE)
 
-	def __str__(self):
-		return self.profile.email + " | " + self.cvc
+# 	def __str__(self):
+# 		return self.profile.email + " | " + self.cvc
 
 class Address(models.Model):
 	profile = models.ForeignKey(Profile , on_delete = models.CASCADE)
@@ -164,6 +164,7 @@ class VehicleInformation(models.Model):
 	monthly_payment = models.FloatField(default=0.0)
 	lender = models.CharField(max_length = 200)
 	dealer_stock_number = models.CharField(max_length = 200)
+	file = models.FileField(upload_to = "Vechile-Documents")
 
 	def __str__(self):
 		return self.vehilcle_id

@@ -208,13 +208,9 @@ class CheckOut(views.APIView):
 
 
 	def post(self, request):
-
 		dictV = {}
 		stripe.api_key = settings.STRIPE_SECRET_KEY
 		amount = request.data.get("totalamount")
-		card_number = request.data.get("card_number")
-		cvc = request.data.get("cvc")
-		expiry_date = request.data.get("expiry_date")
 		email = request.data.get("email")
 		firstname = request.data.get("firstname")
 		lastname = request.data.get("lastname")
@@ -224,16 +220,11 @@ class CheckOut(views.APIView):
 		zipcode = request.data.get("zipcode")
 		orderid = str(request.data.get("orderid"))
 		transaction_id = request.data.get('stripeToken')
-		expiry_date = datetime.strptime(expiry_date, "%Y-%m-%d").date()
 
 		#create profile object
 		profileObj = Profile.objects.create(email = email)
 
-		#create cardobject
-		cardObj = CardDetail.objects.create(card_number =  card_number,expiry_date = expiry_date,
-			cvc = cvc, profile = profileObj)
-
-		# # create address object
+		# create address object
 		addressObj = Address.objects.create(profile = profileObj, first_name = firstname, last_name = lastname, address = address , state = state, city = city, zipcode = zipcode)
 
 		#get order object
@@ -244,7 +235,7 @@ class CheckOut(views.APIView):
 		amount=amount,
 		currency='usd',
 		description='RODO',
-		source=request.POST['stripeToken'],
+		source=transaction_id,
 		metadata={'order_id': orderobj.orderId}
 		)
 		
@@ -323,28 +314,31 @@ class VehicleInfo(views.APIView):
 
 	def get(self, request ,  *arg, **kwargs):
 
-		order_id = request.GET.get("order_id")
-		order = Order.objects.get(orderId=order_id)
-		order_items_list = []
-		order_items = OrderItem.objects.filter(order=order)
-		for items in order_items:
-			order_items_dict = {
-				"items":items.product.category.name,
-				"image":settings.SITE_URL+items.product.category.image.url
-			}
-			order_items_list.append(order_items_dict)
-		response = {
-			"status_code":200,
-			"status":True,
-			"message":"success",
-			"data":{
-				"order_id":order.orderId,
-				"total_price":order.totalPrice,
-				"total_price":order.totalPrice,
-				"order_items":order_items_list
-			}
-		}
-		return JsonResponse(response)
+		context = {}
+		orderid = str(request.GET.get('orderid'))
+		if orderid == 'None':
+			context['status_code'] = 404
+			context['status'] = False
+			context['message'] = "Order ID required"
+			context['data'] = []
+			return JsonResponse(context)
+		orders = OrderItem.objects.filter(order__orderId = orderid)
+		print(orders)
+		context['data'] = {}
+		order_list = []
+		totalamount = 0
+		for order in orders:
+			orderdict = {}
+			orderdict['name'] = order.product.category.__str__()
+			orderdict['image'] = settings.SITE_URL + order.product.image.url
+			totalamount += order.product.price
+			order_list.append(orderdict)
+		context['data']['products'] = order_list
+		context['data']['totalamount'] = totalamount
+		context['status_code'] = 200
+		context['status'] = True
+		context['message'] = "success"
+		return JsonResponse(context)
 
 	def post(self, request ,  *arg, **kwargs):
 		response = {}
@@ -356,6 +350,7 @@ class VehicleInfo(views.APIView):
 		monthly_payment = request.POST.get("monthly_payment")
 		lender = request.POST.get("lender")
 		dealer_stock_number = request.POST.get("dealer_stock_number")
+		file =  request.FILES.get("file")
 		response['status_code'] = 404
 		response['status'] = False
 		if not order_id:
@@ -374,6 +369,8 @@ class VehicleInfo(views.APIView):
 			response['message'] = "Lender connot be blank."
 		elif not dealer_stock_number:
 			response['message'] = "Dealer stock number connot be blank."
+		elif not file:
+			response['message'] = "Please upload the related documents."
 		else:
 			date_obj = datetime.strptime(date, "%d/%m/%Y")
 			order = Order.objects.get(orderId=order_id)
@@ -385,39 +382,13 @@ class VehicleInfo(views.APIView):
 				miles_per_year=miles_per_year,
 				monthly_payment=monthly_payment,
 				lender=lender,
-				dealer_stock_number=dealer_stock_number
+				dealer_stock_number=dealer_stock_number,
+				file = file
+
 			)
 			response['status_code'] = 200
 			response['status'] = True
 			response['message'] = "success"
 		return JsonResponse(response)
 
-class Orders(views.APIView):
-
-	def post(self, request):
-		print(request.POST)
-		context = {}
-		orderid = str(request.POST.get('orderid'))
-		print(type(orderid))
-		if orderid == 'None':
-			context['status_code'] = 404
-			context['status'] = False
-			context['message'] = "Order ID required"
-			context['data'] = []
-			return JsonResponse(context)
-		orders = OrderItem.objects.filter(order__orderId = orderid)
-		context['data'] = {}
-		order_list = []
-		totalamount = 0
-		for order in orders:
-			orderdict = {}
-			orderdict['name'] = order.product.category.__str__()
-			orderdict['image'] = settings.SITE_URL + order.product.image.url
-			totalamount += order.product.price
-			order_list.append(orderdict)
-		context['data']['products'] = order_list
-		context['data']['totalamount'] = totalamount
-		context['status_code'] = 200
-		context['status'] = True
-		context['message'] = "success"
-		return JsonResponse(context)
+		
