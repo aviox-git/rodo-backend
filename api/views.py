@@ -24,10 +24,12 @@ class Home(views.APIView):
 
 		dictV = {}
 		catObj = Category.objects.all()
-		metaitems = MetaContent.objects.all()
+		metaitem = MetaContent.objects.filter(page = "home")
+		print(metaitem)
 		catobjs = CategorySerializer(catObj, many=True)
-		metaserailizer = MetaContentSerailizers(metaitems, many = True)
+		metaserailizer = MetaContentSerailizers(metaitem, many = True)
 		response_data = catobjs.data
+		print(metaserailizer.data)
 		for data in response_data:
 			data["description"] = truncatechars(data["description"], 142)
 			data["image"] = settings.SITE_URL+data["image"]

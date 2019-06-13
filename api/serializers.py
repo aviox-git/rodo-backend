@@ -37,7 +37,7 @@ class MetaContentSerailizers(serializers.ModelSerializer):
 		fields = ( "h1" , "meta_descripton", "title")
 
 class CategorySerializer(serializers.ModelSerializer):
-	meta = serializers.StringRelatedField(many=True)
+	meta = MetaContentSerailizers(many=True)
 
 	class Meta:
 		model = Category
