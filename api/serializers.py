@@ -34,14 +34,14 @@ class MetaContentSerailizers(serializers.ModelSerializer):
 	
 	class Meta:
 		model = MetaContent
-		fields = ("slug" , "h1" , "meta_descripton", "title")
+		fields = ( "h1" , "meta_descripton", "title")
 
 class CategorySerializer(serializers.ModelSerializer):
 	meta = serializers.StringRelatedField(many=True)
 
 	class Meta:
 		model = Category
-		fields = ("id" , "name" ,"description" ,"image" , "meta")
+		fields = ("id" , "name" ,"description" ,"image" , "slug", "meta")
 
 
 class LeaseTermSerializer(serializers.ModelSerializer):

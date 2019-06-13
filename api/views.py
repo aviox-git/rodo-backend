@@ -48,26 +48,27 @@ class Product(views.APIView):
 	def get(self, request, *arg, **kwargs):
 
 		dictV = {}
-		productid = request.GET.get("productid")
-		if not productid:
+		productslug = request.GET.get("productslug")
+		if not productslug:
 			dictV["status"] = False
-			dictV["message"] = "Product id is a required field"
+			dictV["message"] = "Product slug is a required field"
 			dictV["status_code"] = 200
 			dictV['data'] = []
 			return JsonResponse(dictV)
 
-		productobj = ProductDetail.objects.get(pk = productid)
+		productobj = ProductDetail.objects.get(slug = productslug)
 		category = productobj.category.id
 		metaitems = MetaContent.objects.filter(category__id = category)
 		metaserailizer = MetaContentSerailizers(metaitems, many = True)
 		# items['meta'] = metaserailizer.data
 		trimid = productobj.trim
-		otherprod = ProductDetail.objects.filter(trim_id = trimid).exclude(pk = productid)
+		otherprod = ProductDetail.objects.filter(trim_id = trimid).exclude(pk = productobj.id)
 		serializer = ProductSerializer(productobj)
 		otherserilizer = ProductSerializer(otherprod , many = True)
 		single_prod_data = serializer.data
 		(single_prod_data).update(single_prod_data["category"])
 		del single_prod_data["category"]
+		single_prod_data["meta"] = metaserailizer.data
 		other_pruct_list = []
 		for product in otherserilizer.data:
 			(product).update(product["category"])
@@ -184,6 +185,7 @@ class  SearchView(views.APIView):
 			items['image'] = item.category.image.url
 			items['description'] = item.category.description
 			items['price'] = item.price
+			items['slug'] = item.slug
 			items_list.append(items)
 
 		if productobj:
@@ -342,7 +344,7 @@ class VehicleInfo(views.APIView):
 
 	def post(self, request ,  *arg, **kwargs):
 		response = {}
-		order_id = request.POST.get("order_id")
+		order_id = str(request.POST.get("order_id"))
 		leaseterm = request.POST.get("leaseterm")
 		vehilcle_id = request.POST.get("vehilcle_id")
 		date = request.POST.get("date")

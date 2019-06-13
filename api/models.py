@@ -47,9 +47,15 @@ class Category(models.Model):
 	name = models.CharField(max_length = 100)
 	description = models.TextField(null = True)
 	image = models.ImageField(upload_to = "category")
+	slug = models.SlugField(null = True,blank = True)
 
 	def __str__(self):
 		return self.name
+
+	def save(self , *arg, **kwargs):
+		self.slug =  slugify(self.name)
+		super(Category, self).save(*arg, **kwargs)
+
 
 
 class ProductDetail(models.Model):
@@ -59,9 +65,14 @@ class ProductDetail(models.Model):
 	description = RichTextUploadingField(null = True)
 	more_description = RichTextUploadingField(null = True)
 	image = models.ImageField(upload_to = "products" , null = True)
+	slug = models.SlugField(null= True ,blank = True)
 
 	def __str__(self):
 		return self.trim.model.make.make + " " + self.trim.model.model + " " + self.trim.trim + " with price - " +  str(self.price) + " in Category " + self.category.name
+
+	def save(self , *arg, **kwargs):
+		self.slug = slugify(self.trim.__str__()) + "/" + slugify(self.category.name)
+		super(ProductDetail, self).save(*arg, **kwargs)
 
 class Coupon(models.Model):
 	name = models.CharField(max_length = 200)
@@ -133,7 +144,6 @@ class MetaContent(models.Model):
 	def save(self, *arg , **kwargs):
 		if self.page == "home" or self.page == "checkout" and self.category == None:
 			if self.page == "home":
-				print("fgdfg")
 				self.slug = "www.rodoinsurance.com"
 			else:
 				self.slug = "www.rodoinsurance.com/" + slugify(self.page)
@@ -145,7 +155,6 @@ class MetaContent(models.Model):
 
 		self.h1= self.h1.capitalize()
 		super(MetaContent , self).save(*arg ,**kwargs)
-		return self.name
 
 
 class LeaseTerm(models.Model):
