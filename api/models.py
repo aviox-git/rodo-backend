@@ -45,7 +45,8 @@ class Trim(models.Model):
 
 class Category(models.Model):
 	name = models.CharField(max_length = 100)
-	description = models.TextField(null = True)
+	description = RichTextUploadingField(null = True)
+	more_description = RichTextUploadingField(null = True)
 	image = models.ImageField(upload_to = "category")
 	slug = models.SlugField(null = True,blank = True)
 
