@@ -48,13 +48,13 @@ class Category(models.Model):
 	description = RichTextUploadingField(null = True)
 	more_description = RichTextUploadingField(null = True)
 	image = models.ImageField(upload_to = "category")
-	slug = models.SlugField(null = True,blank = True)
+	slug = models.SlugField(max_length=300,null = True,blank = True)
 
 	def __str__(self):
 		return self.name
 
 	def save(self , *arg, **kwargs):
-		self.slug =  slugify(self.name)
+		# self.slug =  slugify(self.name)
 		super(Category, self).save(*arg, **kwargs)
 
 

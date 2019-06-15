@@ -15,7 +15,7 @@ admin.site.register(Order)
 admin.site.register(OrderItem)
 admin.site.register(MetaContent)
 admin.site.register(LeaseTerm)
-
+admin.site.register(VehicleInformation)
 
 
 
