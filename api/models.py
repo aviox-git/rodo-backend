@@ -47,6 +47,7 @@ class Category(models.Model):
 	name = models.CharField(max_length = 100)
 	description = models.TextField(null = True)
 	image = models.ImageField(upload_to = "category")
+	orderby = models.PositiveSmallIntegerField(default = 1)
 	slug = models.SlugField(null = True,blank = True)
 
 	def __str__(self):

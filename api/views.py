@@ -23,13 +23,11 @@ class Home(views.APIView):
 		"""
 
 		dictV = {}
-		catObj = Category.objects.all()
+		catObj = Category.objects.all().order_by("orderby")
 		metaitem = MetaContent.objects.filter(page = "home")
-		print(metaitem)
 		catobjs = CategorySerializer(catObj, many=True)
 		metaserailizer = MetaContentSerailizers(metaitem, many = True)
 		response_data = catobjs.data
-		print(metaserailizer.data)
 		for data in response_data:
 			data["description"] = truncatechars(data["description"], 142)
 			data["image"] = settings.SITE_URL+data["image"]
@@ -178,7 +176,7 @@ class  SearchView(views.APIView):
 			dictV['data'] = []
 			dictV["message"] = "Trim id is required"
 			return JsonResponse(dictV)
-		productobj = ProductDetail.objects.filter(trim_id = trimID)
+		productobj = ProductDetail.objects.filter(trim_id = trimID).order_by("category__orderby")
 		items = {}
 		for item in productobj:
 			items = {}
