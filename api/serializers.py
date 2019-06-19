@@ -41,7 +41,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = Category
-		fields = ("id" , "name" ,"description" ,"image" , "slug", "meta", "more_description")
+		fields = ("id" , "name","subtitle" ,"description" ,"image" , "slug", "meta", "more_description")
 
 
 class LeaseTermSerializer(serializers.ModelSerializer):

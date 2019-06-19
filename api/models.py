@@ -45,6 +45,7 @@ class Trim(models.Model):
 
 class Category(models.Model):
 	name = models.CharField(max_length = 100)
+	subtitle = models.CharField(max_length = 1000,default = "this is subcategory",null = True)
 	description = RichTextUploadingField(null = True)
 	more_description = RichTextUploadingField(null = True)
 	image = models.ImageField(upload_to = "category")
