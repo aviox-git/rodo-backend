@@ -45,7 +45,7 @@ class Trim(models.Model):
 
 class Category(models.Model):
 	name = models.CharField(max_length = 100)
-	subtitle = models.CharField(max_length = 1000,default = "this is subcategory",null = True)
+	subtitle = models.CharField(max_length = 1000, default = "this is subcategory",null = True)
 	description = RichTextUploadingField(null = True)
 	more_description = RichTextUploadingField(null = True)
 	image = models.ImageField(upload_to = "category")
@@ -132,7 +132,6 @@ class MetaContent(models.Model):
 	title = models.CharField(max_length = 500)
 	h1 = models.CharField(max_length = 1000)
 	meta_descripton = models.TextField()
-	slug = models.SlugField(unique = True,blank = True)
 
 	def __str__(self):
 		return self.title
@@ -142,22 +141,6 @@ class MetaContent(models.Model):
 			raise ValidationError("Category is a required field now")
 		elif(self.page == "home" or self.page == "checkout") and self.category != None:
 			raise ValidationError("Category should be empty now")
-
-
-	def save(self, *arg , **kwargs):
-		if self.page == "home" or self.page == "checkout" and self.category == None:
-			if self.page == "home":
-				self.slug = "www.rodoinsurance.com"
-			else:
-				self.slug = "www.rodoinsurance.com/" + slugify(self.page)
-
-		elif self.page == "cat" and self.category == None:
-			raise ValidationError("Category is required field now")
-		else:
-			self.slug = "www.rodoinsurance.com/" + slugify(self.category.name)
-
-		self.h1= self.h1.capitalize()
-		super(MetaContent , self).save(*arg ,**kwargs)
 
 
 class LeaseTerm(models.Model):
