@@ -186,6 +186,7 @@ class  SearchView(views.APIView):
 			items['description'] = item.category.description
 			items['price'] = item.price
 			items['slug'] = item.slug
+			items['subtitle'] = item.category.subtitle
 			items_list.append(items)
 
 		if productobj:
