@@ -68,7 +68,7 @@ class ProductDetail(models.Model):
 	description = RichTextUploadingField(null = True)
 	more_description = RichTextUploadingField(null = True)
 	image = models.ImageField(upload_to = "products" , null = True)
-	slug = models.SlugField(null= True ,blank = True)
+	slug = models.SlugField(null= True ,blank = True, max_length=255)
 
 	def __str__(self):
 		return self.trim.model.make.make + " " + self.trim.model.model + " " + self.trim.trim + " with price - " +  str(self.price) + " in Category " + self.category.name

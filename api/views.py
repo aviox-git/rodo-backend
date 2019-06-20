@@ -25,7 +25,7 @@ class Home(views.APIView):
 		dictV = {}
 		catObj = Category.objects.all().order_by("orderby")
 		metaitem = MetaContent.objects.filter(page = "home")
-		catobjs = CategorySerializer(catObj, many=True)
+		catobjs = OtherCategorySerializer(catObj, many=True)
 		metaserailizer = MetaContentSerailizers(metaitem, many = True)
 		response_data = catobjs.data
 		for data in response_data:
@@ -133,6 +133,7 @@ class  SearchView(views.APIView):
 				trim_dict['name']=obj.trim
 				trim_dict["make"] = obj.model.make.make
 				trim_dict["model"] = obj.model.model
+				trim_dict['year']=obj.model.make.year.year
 				trim_list.append(trim_dict)
 			if trim_list:
 				dataObj["trim"]=trim_list
