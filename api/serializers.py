@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import *
+from django.conf import settings
 
 class MakeSerializer(serializers.ModelSerializer):
 	class Meta:
@@ -38,10 +39,14 @@ class MetaContentSerailizers(serializers.ModelSerializer):
 
 class CategorySerializer(serializers.ModelSerializer):
 	meta = MetaContentSerailizers(many=True)
+	image = serializers.SerializerMethodField()
 
 	class Meta:
 		model = Category
 		fields = ("id" , "name","subtitle" ,"description" ,"image" , "slug", "meta", "more_description")
+
+	def get_image(self,obj):
+		return settings.SITE_URL + obj.image.url
 
 class OtherCategorySerializer(serializers.ModelSerializer):
 	meta = MetaContentSerailizers(many=True)
@@ -58,12 +63,6 @@ class OtherCategorySerializer(serializers.ModelSerializer):
 		single_cat = catserailizer.data
 		for cat in single_cat:
 			cat.pop('more_description')
-		# for cat in category:
-		# 	print(cat)
-		# 	catserailizer = CategorySerializer(cat)
-		# 	single_cat = catserailizer.data
-		# 	single_cat.pop('more_description')
-		# 	cat_list.append(single_cat)
 		return single_cat
 
 class LeaseTermSerializer(serializers.ModelSerializer):
