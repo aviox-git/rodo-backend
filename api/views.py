@@ -13,7 +13,6 @@ from django.template.defaultfilters import truncatechars_html,truncatechars
 from datetime import datetime
 
 # Create your views here.
-
 class Home(views.APIView):
 
 	def get(self, request ,  *arg, **kwargs):
@@ -37,6 +36,28 @@ class Home(views.APIView):
 		dictV["message"] = "success"
 		dictV["meta"] = metaserailizer.data
 
+		return JsonResponse(dictV)
+
+class CategoryView(views.APIView):
+
+	def post(self, request):
+
+		dictV = {}
+		category_id = request.POST.get('id')
+
+		if not category_id:
+			dictV["status"] = False
+			dictV["message"] = "Category ID is a required"
+			dictV["status_code"] = 200
+			dictV['data'] = []
+			return JsonResponse(dictV)
+
+		categoryitem = Category.objects.get(pk = category_id)
+		serializer = OtherCategorySerializer(categoryitem)
+		dictV["status"] = True
+		dictV["message"] = "success"
+		dictV["status_code"] = 200
+		dictV['data'] = serializer.data
 		return JsonResponse(dictV)
 
 class Product(views.APIView):
@@ -223,7 +244,7 @@ class CheckOut(views.APIView):
 		city = request.data.get("city")
 		zipcode = request.data.get("zipcode")
 		orderid = str(request.data.get("orderid"))
-		transaction_id = request.data.get('stripeToken')
+		stripeToken = request.data.get('stripeToken')
 
 		#create profile object
 		profileObj = Profile.objects.create(email = email)
@@ -235,28 +256,57 @@ class CheckOut(views.APIView):
 		orderobj = Order.objects.get(orderId = orderid)
 		orderobj.profile = profileObj
 
-		charge = stripe.Charge.create(
-		amount=amount,
-		currency='usd',
-		description='RODO',
-		source=transaction_id,
-		metadata={'order_id': orderobj.orderId}
-		)
-		
-		if transaction_id:
-			orderobj.status = True
-			orderitem = OrderItem.objects.filter(order__orderId = orderid)
-			orderitem.update(transaction_id=transaction_id)
+		try:
+
+			charge = stripe.Charge.create(
+			amount=amount,
+			currency='usd',
+			description='RODO',
+			source= stripeToken,
+			metadata={'order_id': orderobj.orderId}
+			)
+
+			paid = charge.get('paid')
+
+			if paid == True:
+				orderobj.status = True
+				orderitem = OrderItem.objects.filter(order__orderId = orderid)
+				quantity = len(orderitem)
+				itemlist = []
+				for item in orderitem:
+					productdict = {}
+					name = item.product.trim.__str__()
+					price = item.product.price
+					itemlist.append(productdict)
+
+				orderitem.update(transaction_id=transaction_id)
+				orderobj.save()
+				dictV['status_code'] = 200
+				dictV['status'] = True
+				dictV['message'] = "your payment is successfull"
+				dictV['data'] = {}
+				dictV['data']['id'] = charge.get('id')
+				dictV['data']['shipping'] = charge.get('shipping')
+				dictV['data']['currency'] = charge.get('currency')
+				dictV['data']['tax'] = charge.get('tax')
+				dictV['data']['currency'] = charge.get('currency')
+				dictV['data']['affiliation'] = charge.get('affiliation')
+				dictV['data']['items'] = itemlist
+				return JsonResponse(dictV)
+				
 			orderobj.save()
-			dictV['status_code'] = 200
-			dictV['status'] = True
-			dictV['message'] = "your payment is successfull"
+			dictV['status_code'] = 403
+			dictV['status'] = False
+			dictV['message'] = "Your payment was not successfull"
+			dictV['data'] = {}
 			return JsonResponse(dictV)
-		orderobj.save()
-		dictV['status_code'] = 403
-		dictV['status'] = False
-		dictV['message'] = "Your payment was not successfull"
-		return JsonResponse(dictV)
+
+		except Exception as e:
+			dictV['status_code'] = 403
+			dictV['status'] = False
+			dictV['message'] = str(e)
+			dictV['data'] = {}
+			return JsonResponse(dictV)
 
 @csrf_exempt
 def checkoutpage(request):

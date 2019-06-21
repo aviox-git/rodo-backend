@@ -51,10 +51,14 @@ class CategorySerializer(serializers.ModelSerializer):
 class OtherCategorySerializer(serializers.ModelSerializer):
 	meta = MetaContentSerailizers(many=True)
 	other_categoreis = serializers.SerializerMethodField()
+	image = serializers.SerializerMethodField()
 
 	class Meta:
 		model = Category
 		fields = ("id" , "name","subtitle" ,"description" ,"image" , "slug", "meta", "more_description", 'other_categoreis')
+
+	def get_image(self,obj):
+		return settings.SITE_URL + obj.image.url
 
 	def get_other_categoreis(self, obj):
 		category = Category.objects.exclude(pk = obj.pk)
