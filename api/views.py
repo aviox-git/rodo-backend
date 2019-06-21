@@ -279,7 +279,7 @@ class CheckOut(views.APIView):
 					price = item.product.price
 					itemlist.append(productdict)
 
-				orderitem.update(transaction_id=transaction_id)
+				orderitem.update(transaction_id = charge.get('id'))
 				orderobj.save()
 				dictV['status_code'] = 200
 				dictV['status'] = True
@@ -293,7 +293,7 @@ class CheckOut(views.APIView):
 				dictV['data']['affiliation'] = charge.get('affiliation')
 				dictV['data']['items'] = itemlist
 				return JsonResponse(dictV)
-				
+
 			orderobj.save()
 			dictV['status_code'] = 403
 			dictV['status'] = False
