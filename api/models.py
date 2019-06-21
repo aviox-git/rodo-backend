@@ -67,7 +67,7 @@ class ProductDetail(models.Model):
 	price = models.IntegerField()
 	description = RichTextUploadingField(null = True)
 	more_description = RichTextUploadingField(null = True)
-	image = models.ImageField(upload_to = "products" , null = True)
+	image = models.ImageField(upload_to = "products" ,blank = True, null = True)
 	slug = models.SlugField(null= True ,blank = True, max_length=255)
 
 	def __str__(self):
@@ -131,7 +131,7 @@ class MetaContent(models.Model):
 	category = models.ForeignKey(Category, on_delete = models.CASCADE ,  null = True,  blank = True , related_name='meta')
 	title = models.CharField(max_length = 500)
 	h1 = models.CharField(max_length = 1000)
-	meta_descripton = models.TextField()
+	meta_descripton = models.TextField(blank = True, null = True)
 
 	def __str__(self):
 		return self.title
