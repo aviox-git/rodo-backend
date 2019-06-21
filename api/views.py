@@ -275,8 +275,8 @@ class CheckOut(views.APIView):
 				itemlist = []
 				for item in orderitem:
 					productdict = {}
-					name = item.product.trim.__str__()
-					price = item.product.price
+					productdict['name'] = item.product.category.name
+					productdict['price'] = item.product.price
 					itemlist.append(productdict)
 
 				orderitem.update(transaction_id = charge.get('id'))
@@ -292,6 +292,7 @@ class CheckOut(views.APIView):
 				dictV['data']['currency'] = charge.get('currency')
 				dictV['data']['affiliation'] = charge.get('affiliation')
 				dictV['data']['items'] = itemlist
+				dictV['data']['quantity'] = quantity
 				return JsonResponse(dictV)
 
 			orderobj.save()
