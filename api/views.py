@@ -27,9 +27,6 @@ class Home(views.APIView):
 		catobjs = OtherCategorySerializer(catObj, many=True)
 		metaserailizer = MetaContentSerailizers(metaitem, many = True)
 		response_data = catobjs.data
-		for data in response_data:
-			# data["description"] = truncatechars(data["description"], 142)
-			data["image"] = settings.SITE_URL+data["image"]
 		dictV['data'] = response_data
 		dictV["status"] = True
 		dictV["status_code"] = 200
