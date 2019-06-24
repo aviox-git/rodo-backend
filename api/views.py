@@ -279,6 +279,7 @@ class CheckOut(views.APIView):
 			charge = stripe.Charge.create(
 			amount=amount,
 			currency='usd',
+
 			description=description,
 			source= stripeToken,
 			metadata={'order_id': orderobj.orderId}
@@ -309,6 +310,7 @@ class CheckOut(views.APIView):
 				dictV['data']['tax'] = charge.get('tax')
 				dictV['data']['currency'] = charge.get('currency')
 				dictV['data']['affiliation'] = charge.get('affiliation')
+				dictV['data']['revenue'] = charge.get('revenue')
 				dictV['data']['items'] = itemlist
 				dictV['data']['quantity'] = quantity
 				return JsonResponse(dictV)
