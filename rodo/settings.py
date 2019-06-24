@@ -146,6 +146,16 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 STRIPE_SECRET_KEY = 'sk_test_nNoeBueXsIhLEjYOj6nW2nKF'
 STRIPE_PUBLISHABLE_KEY = 'pk_test_unowLoWOKu66fXz5AEODPTpv'
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'redexsolutionspvtlmt@gmail.com'
+EMAIL_HOST_PASSWORD = 'rajinder@1994'
+
+TO_EMAIL = 'vikasaviox@gmail.com'
+FROM_EMAIL = 'redexsolutionspvtlmt@gmail.com'
+
 #ckeditor config
 
 CKEDITOR_UPLOAD_PATH = 'products/'

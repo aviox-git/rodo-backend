@@ -11,6 +11,15 @@ import datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.template.defaultfilters import truncatechars_html,truncatechars
 from datetime import datetime
+# for email
+from django.core.mail import send_mail
+from django.core.mail import EmailMessage
+import smtplib		
+from email.mime.text import MIMEText		
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication		
+from django.template.loader import render_to_string		
+import os, sys
 
 # Create your views here.
 class Home(views.APIView):
@@ -37,10 +46,10 @@ class Home(views.APIView):
 
 class CategoryView(views.APIView):
 
-	def post(self, request):
+	def get(self, request):
 
 		dictV = {}
-		category_id = request.POST.get('id')
+		category_id = request.GET.get('id')
 
 		if not category_id:
 			dictV["status"] = False
@@ -253,12 +262,24 @@ class CheckOut(views.APIView):
 		orderobj = Order.objects.get(orderId = orderid)
 		orderobj.profile = profileObj
 
+		orderitem = OrderItem.objects.filter(order__orderId = orderid)		
+		quantity = len(orderitem)		
+		ordets_lists=""		
+		itemlist = []		
+		for item in orderitem:		
+			productdict = {}		
+			productdict['name'] = item.product.category.name		
+			ordets_lists=ordets_lists+item.product.category.name +  "   " +str(item.product.price)+";"		
+			productdict['price'] = item.product.price		
+			itemlist.append(productdict)		
+		description="Order:     "+str(orderid)+",     Purchased Products:     "+ordets_lists + ",     Customer:     "+firstname + lastname+ "  "+email 		
+
 		try:
 
 			charge = stripe.Charge.create(
 			amount=amount,
 			currency='usd',
-			description='RODO',
+			description=description,
 			source= stripeToken,
 			metadata={'order_id': orderobj.orderId}
 			)
@@ -268,13 +289,13 @@ class CheckOut(views.APIView):
 			if paid == True:
 				orderobj.status = True
 				orderitem = OrderItem.objects.filter(order__orderId = orderid)
-				quantity = len(orderitem)
-				itemlist = []
-				for item in orderitem:
-					productdict = {}
-					productdict['name'] = item.product.category.name
-					productdict['price'] = item.product.price
-					itemlist.append(productdict)
+				# quantity = len(orderitem)
+				# itemlist = []
+				# for item in orderitem:
+				# 	productdict = {}
+				# 	productdict['name'] = item.product.category.name
+				# 	productdict['price'] = item.product.price
+				# 	itemlist.append(productdict)
 
 				orderitem.update(transaction_id = charge.get('id'))
 				orderobj.save()
@@ -426,10 +447,9 @@ class VehicleInfo(views.APIView):
 		else:
 			try:
 				date_obj = datetime.strptime(date, '%Y-%m-%d')
-				print(date_obj)
 				order = Order.objects.get(orderId=order_id)
-				VehicleInformation.objects.create(
-					order=order,
+				vechileinfo = VehicleInformation.objects.create(
+					order = order,
 					leaseterm_id=leaseterm,
 					vehilcle_id=vehilcle_id,
 					date=date_obj.date(),
@@ -439,10 +459,51 @@ class VehicleInfo(views.APIView):
 					dealer_stock_number=dealer_stock_number,
 					file = file
 				)
+				leaseterm_detail = LeaseTerm.objects.get(id=leaseterm)		
+				leaseterm_name = leaseterm_detail.name		
+				category_name = []		
+				productDetail = ""		
+				orderItem = OrderItem.objects.filter(order_id=order.id)		
+				for r in range(len(orderItem)):		
+					product_id = orderItem[r].product_id		
+					productDetail = ProductDetail.objects.get(id=product_id)		
+					category_id = productDetail.category_id		
+					categoryDetail = Category.objects.get(id=category_id)		
+					category_name.append(categoryDetail.name)		
+				trimDetail = Trim.objects.get(id=productDetail.trim_id)		
+				trim = trimDetail.trim		
+				model_id = trimDetail.model_id		
+				modelDetail = Model.objects.get(id=model_id)		
+				model = modelDetail.model		
+				make_id = modelDetail.make_id		
+				makeDetail = Make.objects.get(id=make_id)		
+				make = makeDetail.make		
+				vehicle = make + " " + model + " " + trim		
+				profile_id = order.profile_id		
+				addressDetail = Address.objects.get(profile_id=profile_id)		
+				full_name = addressDetail.first_name + " "  + addressDetail.last_name		
+				full_address = addressDetail.address + ", " + addressDetail.city + ", " + addressDetail.state + ", " + addressDetail.zipcode		
+				profileDetail = Profile.objects.get(id=profile_id)		
+				email = profileDetail.email
+
+				email_from = settings.FROM_EMAIL
+				subject = " New order placed on "+datetime.now().strftime("%m/%d/%Y")+ " by "+full_name	
+				
+				email_To = [settings.TO_EMAIL,	]
+				file_path = dirname=os.path.dirname(os.path.realpath(sys.argv[0])) + "/api/templates/email_template.html"		
+				html = render_to_string(file_path, {'full_name': full_name, 'full_address': full_address, 'email': email, 'category_name': category_name, 'vehicle': vehicle, 'vehilcle_id': vehilcle_id, 'date': date_obj, 'miles_per_year': miles_per_year, 'monthly_payment': monthly_payment, 'leaseterm_name': leaseterm_name, 'lender': lender, 'dealer_stock_number': dealer_stock_number, 'total_price': order.totalPrice, 'order_id': order_id})		
+
+				msg = EmailMessage(subject , html , email_from, email_To )
+				msg.content_subtype = "html" 
+				file_path = settings.BASE_DIR +  vechileinfo.file.url
+				msg.attach_file(file_path)
+				msg.send()
+
 				response['status_code'] = 200
 				response['status'] = True
 				response['message'] = "success"
 			except Exception as e:
+				raise e
 				response['status_code'] = 400
 				response['status'] = False
 				response['message'] = "Exception raised : " + str(e)
