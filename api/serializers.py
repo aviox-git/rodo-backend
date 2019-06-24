@@ -55,7 +55,7 @@ class OtherCategorySerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = Category
-		fields = ("id" , "name","subtitle" ,"description" ,"image" , "slug", "meta", "more_description", 'other_categoreis')
+		fields = ("id" , "name","subtitle","first_section_title","first_section_description" ,"description" ,"image" , "slug", "meta", "more_description", 'other_categoreis')
 
 	def get_image(self,obj):
 		return settings.SITE_URL + obj.image.url
