@@ -37,10 +37,10 @@ class Home(views.APIView):
 
 class CategoryView(views.APIView):
 
-	def post(self, request):
+	def get(self, request):
 
 		dictV = {}
-		category_id = request.POST.get('id')
+		category_id = request.GET.get('id')
 
 		if not category_id:
 			dictV["status"] = False
