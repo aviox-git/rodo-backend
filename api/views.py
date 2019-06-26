@@ -49,7 +49,7 @@ class CategoryView(views.APIView):
 	def get(self, request):
 
 		dictV = {}
-		category_id = request.GET.get('id')
+		category_id = request.GET.get('slug')
 
 		if not category_id:
 			dictV["status"] = False
@@ -58,7 +58,7 @@ class CategoryView(views.APIView):
 			dictV['data'] = []
 			return JsonResponse(dictV)
 
-		categoryitem = Category.objects.get(pk = category_id)
+		categoryitem = Category.objects.get(slug= category_id)
 		serializer = OtherCategorySerializer(categoryitem)
 		dictV["status"] = True
 		dictV["message"] = "success"
