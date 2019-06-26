@@ -49,7 +49,7 @@ class CategoryView(views.APIView):
 	def get(self, request):
 
 		dictV = {}
-		category_id = request.GET.get('id')
+		category_id = request.GET.get('slug')
 
 		if not category_id:
 			dictV["status"] = False
@@ -58,7 +58,7 @@ class CategoryView(views.APIView):
 			dictV['data'] = []
 			return JsonResponse(dictV)
 
-		categoryitem = Category.objects.get(pk = category_id)
+		categoryitem = Category.objects.get(slug= category_id)
 		serializer = OtherCategorySerializer(categoryitem)
 		dictV["status"] = True
 		dictV["message"] = "success"
@@ -288,7 +288,6 @@ class CheckOut(views.APIView):
 			charge = stripe.Charge.create(
 			amount=amount,
 			currency='usd',
-
 			description=description,
 			source= stripeToken,
 			metadata={'order_id': orderobj.orderId}
@@ -319,7 +318,7 @@ class CheckOut(views.APIView):
 				dictV['data']['tax'] = charge.get('tax')
 				dictV['data']['currency'] = charge.get('currency')
 				dictV['data']['affiliation'] = charge.get('affiliation')
-				dictV['data']['revenue'] = charge.get('revenue')
+				dictV['data']['revenue'] = amount	
 				dictV['data']['items'] = itemlist
 				dictV['data']['quantity'] = quantity
 				return JsonResponse(dictV)
@@ -499,11 +498,8 @@ class VehicleInfo(views.APIView):
 
 				email_from = settings.FROM_EMAIL
 				subject = " New order placed on "+datetime.now().strftime("%m/%d/%Y")+ " by "+full_name	
-				
-				email_To = [settings.TO_EMAIL,	]
-				file_path = settings.BASE_DIR  + "/api/templates/email_template.html"		
-				html = render_to_string(file_path, {'full_name': full_name, 'full_address': full_address, 'email': email, 'category_name': category_name, 'vehicle': vehicle, 'vehilcle_id': vehilcle_id, 'date': date_obj, 'miles_per_year': miles_per_year, 'monthly_payment': monthly_payment, 'leaseterm_name': leaseterm_name, 'lender': lender, 'dealer_stock_number': dealer_stock_number, 'total_price': order.totalPrice, 'order_id': order_id})		
-
+				email_To = [settings.TO_EMAIL,	]		
+				html = render_to_string("email_template.html", {'full_name': full_name, 'full_address': full_address, 'email': email, 'category_name': category_name, 'vehicle': vehicle, 'vehilcle_id': vehilcle_id, 'date': date_obj, 'miles_per_year': miles_per_year, 'monthly_payment': monthly_payment, 'leaseterm_name': leaseterm_name, 'lender': lender, 'dealer_stock_number': dealer_stock_number, 'total_price': order.totalPrice, 'order_id': order_id})		
 				msg = EmailMessage(subject , html , email_from, email_To )
 				msg.content_subtype = "html" 
 				file_path = settings.BASE_DIR +  vechileinfo.file.url

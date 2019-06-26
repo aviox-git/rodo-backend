@@ -153,7 +153,7 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'redexsolutionspvtlmt@gmail.com'
 EMAIL_HOST_PASSWORD = 'rajinder@1994'
 
-TO_EMAIL = 'vikasaviox@gmail.com'
+TO_EMAIL = 'itsmemukesh21@gmail.com'
 FROM_EMAIL = 'redexsolutionspvtlmt@gmail.com'
 
 #ckeditor config
