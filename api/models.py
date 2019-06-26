@@ -39,9 +39,14 @@ class Model(models.Model):
 class Trim(models.Model):
 	trim = models.CharField(max_length = 100, db_index=True) 
 	model = models.ForeignKey(Model, on_delete = models.CASCADE, related_name = "modelsname")
-
+	trimvalue = models.CharField(max_length = 500,editable=False, default = "this is trim", db_index=True)
+	
 	def __str__(self):
 		return self.model.make.make + " - " + self.model.model + " - " + self.trim
+
+	def save(self,*arg,**kwargs):
+		self.trimvalue = self.model.make.make + " " + self.model.model + " " + self.trim
+		super(Trim , self).save(*arg, **kwargs)
 
 class Category(models.Model):
 	name = models.CharField(max_length = 100)
