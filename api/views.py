@@ -131,16 +131,25 @@ class  SearchView(views.APIView):
 		
 		"""
 
-		# search = request.GET.get('search')
+		search = request.GET.get('search')
 		dictV = {}
+		if not search:
+			dictV["status"] = False
+			dictV["status_code"] = 200
+			dictV["message"] = "Search keyword is required"
+			dictV['data'] = []
+			return JsonResponse(dictV)
+
+		
 		try :
 			# search in trim model
 			items_list = []
 			pre_model = ""
 			dataObj = {}
 			trim_list = []
-			# trimObj = Trim.objects.filter(Q(trim__icontains = search)|Q(model__model__icontains = search)|Q(model__make__make__icontains = search)).order_by("model")
-			trimObj = Trim.objects.all().order_by("model")
+			trimObj = Trim.objects.filter(Q(trim__icontains = search)|Q(model__model__icontains = search)|Q(model__make__make__icontains = search)
+				|Q(model__make__year__year__icontains = search)).order_by("model")
+			# trimObj = Trim.objects.all().order_by("model")
 			for obj in trimObj:
 				trim_dict = {}
 				model = obj.model.make.make + " " + obj.model.model
@@ -183,7 +192,7 @@ class  SearchView(views.APIView):
 		except Exception as e:
 			dictV["status"] = False
 			dictV["status_code"] = 200
-			dictV["message"] = e
+			dictV["message"] = str(e)
 			dictV['data'] = []
 			return JsonResponse(dictV)
 
@@ -492,7 +501,7 @@ class VehicleInfo(views.APIView):
 				subject = " New order placed on "+datetime.now().strftime("%m/%d/%Y")+ " by "+full_name	
 				
 				email_To = [settings.TO_EMAIL,	]
-				file_path = dirname=os.path.dirname(os.path.realpath(sys.argv[0])) + "/api/templates/email_template.html"		
+				file_path = settings.BASE_DIR  + "/api/templates/email_template.html"		
 				html = render_to_string(file_path, {'full_name': full_name, 'full_address': full_address, 'email': email, 'category_name': category_name, 'vehicle': vehicle, 'vehilcle_id': vehilcle_id, 'date': date_obj, 'miles_per_year': miles_per_year, 'monthly_payment': monthly_payment, 'leaseterm_name': leaseterm_name, 'lender': lender, 'dealer_stock_number': dealer_stock_number, 'total_price': order.totalPrice, 'order_id': order_id})		
 
 				msg = EmailMessage(subject , html , email_from, email_To )
