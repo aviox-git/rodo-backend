@@ -23,7 +23,7 @@ django-filter==2.0.0
 django-js-asset==1.2.2
 django-paypal==1.0.0
 django-tables2==2.0.0a5
-djangorestframework==3.9.4
+djangorestframework==3.11.2
 docker==3.7.2
 docker-compose==1.21.2
 docker-pycreds==0.4.0
