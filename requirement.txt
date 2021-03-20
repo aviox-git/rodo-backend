@@ -35,7 +35,7 @@ glob2==0.6
 gunicorn==19.9.0
 idna==2.8
 itypes==1.1.0
-Jinja2==2.10.1
+Jinja2==2.11.3
 jmespath==0.9.3
 jsonschema==2.6.0
 kombu==4.2.1
